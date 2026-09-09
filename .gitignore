@@ -1,0 +1,30 @@
+artifacts/
+.video-deps/
+outputs/
+**/__pycache__/
+*.py[cod]
+src/Frontend/node_modules/
+src/Frontend/dist/
+src/Frontend/.angular/
+src/Frontend/test-results/
+src/Frontend/playwright-report/
+src/Frontend/src/devextreme-license.ts
+
+# Build output
+**/bin/
+**/obj/
+**/TestResults/
+**/.sonarqube/
+
+# IDE / OS
+.vs/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Secrets / certs
+*.pfx
+*.pem
+*.key

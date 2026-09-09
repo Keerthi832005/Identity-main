@@ -1,0 +1,72 @@
+<section
+  class="data-grid"
+  [class.data-grid--flush]="flush()"
+  [attr.aria-label]="ariaLabel() || heading() || null"
+  [attr.aria-busy]="loading()"
+>
+  @if (toolbar()) {
+    <app-grid-toolbar
+      [for]="gridRef"
+      [heading]="heading()"
+      [count]="count()"
+      [searchMode]="searchMode()"
+      [searchTerm]="searchTerm()"
+      (searchTermChange)="searchTermChange.emit($event)"
+      [searchPlaceholder]="searchPlaceholder()"
+      [chooser]="chooser()"
+    >
+      <!-- ngProjectAs is required on a re-projection: without it the <ng-content> element itself
+           is what the toolbar matches, and every slot collapses into its default one. -->
+      <ng-content select="[toolbar-lead]" ngProjectAs="[toolbar-lead]" />
+      <ng-content select="[toolbar-search]" ngProjectAs="[toolbar-search]" />
+      <ng-content select="[toolbar-actions]" ngProjectAs="[toolbar-actions]" />
+    </app-grid-toolbar>
+  }
+
+  @if (loading() && !rows().length) {
+    <app-skeleton shape="row" [lines]="skeletonRows()" />
+  }
+
+  <dx-data-grid
+    #gridRef
+    appGridPreset
+    [density]="density()"
+    [class.is-hidden]="loading() && !rows().length"
+    width="100%"
+    [height]="height() || undefined"
+    [dataSource]="dataSource"
+    [keyExpr]="keyExpr() || undefined"
+    [columns]="$any(gridColumns)"
+    [elementAttr]="{ 'aria-label': ariaLabel() || heading() }"
+    [disabled]="disabled()"
+    [remoteOperations]="false"
+    [wordWrapEnabled]="wordWrap()"
+    [columnAutoWidth]="autoWidth()"
+    [columnResizingMode]="resizeMode()"
+    [noDataText]="loading() ? loadingText() : emptyText()"
+    [sorting]="{ mode: sortable() ? 'single' : 'none' }"
+    [filterRow]="{ visible: filterable(), applyFilter: 'auto' }"
+    [headerFilter]="{ visible: filterable(), allowSearch: true }"
+    [selection]="{ mode: selection() }"
+    [selectedRowKeys]="selectedRowKeys"
+    [paging]="{ enabled: pageSize() > 0, pageSize: pageSize() }"
+    [pager]="{
+      visible: pageSize() > 0,
+      displayMode: 'adaptive',
+      showPageSizeSelector: pageSizes().length > 1,
+      allowedPageSizes: pageSizes(),
+      showNavigationButtons: true,
+      showInfo: true,
+      infoText: infoText(),
+    }"
+    (onContentReady)="pruneViews()"
+    (onRowClick)="rowClick.emit($event.data)"
+    (onSelectionChanged)="selectionChange.emit($any($event).selectedRowsData)"
+  ></dx-data-grid>
+
+  <!-- Cell renderers a screen declares with *appGridCell are read as content children, not
+       projected: DevExtreme stamps them into its own cell containers. -->
+  <ng-content />
+
+  <ng-content select="[grid-footer]" />
+</section>

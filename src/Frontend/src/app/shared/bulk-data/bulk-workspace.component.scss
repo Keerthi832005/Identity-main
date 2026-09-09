@@ -1,0 +1,171 @@
+:host {
+  display: block;
+}
+
+.batch-band {
+  background: var(--app-border);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  overflow: hidden;
+}
+
+.stat {
+  background: var(--app-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--app-space-3) var(--app-space-4);
+}
+
+.stat__label {
+  color: var(--app-text-secondary);
+  font-family: var(--app-font-display);
+  font-size: 0.786rem;
+  font-weight: 600;
+  letter-spacing: var(--app-letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.stat__value {
+  font-family: var(--app-font-mono);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: var(--app-line-height-tight);
+}
+
+.stat__meta {
+  color: var(--app-text-secondary);
+  font-size: 0.786rem;
+}
+
+.stat--ready .stat__value {
+  color: color-mix(in srgb, var(--app-success) 78%, var(--app-text));
+}
+
+.stat--error .stat__value {
+  color: var(--app-danger);
+}
+
+.grid-wrap {
+  height: clamp(260px, calc(100dvh - 400px), 580px);
+  min-width: 0;
+}
+
+/* The compact pager's calculated width otherwise clips three-digit page sizes
+   when the shared form theme adds padding to DevExtreme inputs. */
+:host ::ng-deep .grid-wrap .dx-page-sizes .dx-selectbox {
+  min-width: 92px;
+}
+
+:host ::ng-deep .grid-wrap .dx-pages .dx-numberbox {
+  min-width: 64px;
+}
+
+.staged-cell {
+  min-width: 0;
+}
+
+.cell-error-text {
+  color: var(--app-danger);
+  display: block;
+  font-size: var(--app-font-size-caption);
+  white-space: normal;
+}
+
+.error-reference {
+  font-family: var(--app-font-mono);
+  overflow-wrap: anywhere;
+}
+.pill {
+  border: 1px solid;
+  border-radius: 11px;
+  font-size: 0.786rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.pill--create {
+  background: var(--app-success-soft);
+  border-color: var(--app-success-border);
+}
+
+.pill--update {
+  background: var(--app-warning-soft);
+  border-color: var(--app-warning-border);
+}
+
+.pill--invalid {
+  background: var(--app-danger-soft);
+  border-color: var(--app-danger-border);
+}
+
+.pill--applied {
+  background: var(--app-surface-muted);
+  border-color: var(--app-border);
+  color: var(--app-text-secondary);
+}
+
+.commit-bar {
+  align-items: center;
+  background: var(--app-surface);
+  border-top: 1px solid var(--app-border);
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-3);
+  padding: var(--app-space-3) var(--app-space-4);
+  position: sticky;
+  z-index: var(--app-z-sticky);
+}
+
+.commit-bar p {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-supporting);
+  margin: 0;
+}
+
+.commit-bar p b {
+  color: var(--app-text);
+  font-weight: 600;
+}
+
+.commit-bar dx-button {
+  margin-left: auto;
+}
+
+/* Staged cells are editable in place, so a person fixes a rejected row where they see it rather than
+   downloading a workbook, correcting it and uploading again. */
+.cell-editor {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: inherit;
+  font: inherit;
+  min-width: 0;
+  padding: 3px 6px;
+  width: 100%;
+}
+
+.cell-editor:hover:not(:disabled) {
+  border-color: var(--app-border);
+}
+
+.cell-editor:focus {
+  background: var(--app-surface);
+  border-color: var(--app-primary);
+  outline: none;
+}
+
+.cell-editor:disabled {
+  color: var(--app-text-secondary);
+  cursor: default;
+}
+
+.cell-editor--invalid {
+  border-bottom-color: var(--app-danger);
+}

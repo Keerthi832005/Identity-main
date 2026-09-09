@@ -1,0 +1,58 @@
+<div class="bar">
+  <div class="bar__lead">
+    @if (heading()) {
+      <h3>
+        {{ heading() }}
+        @if (count() !== null) {
+          <small>{{ count() }}</small>
+        }
+      </h3>
+    }
+    <ng-content />
+  </div>
+  <div class="bar__trail">
+    @if (showsSearch) {
+      <app-input
+        class="search"
+        type="search"
+        [ariaLabel]="searchPlaceholder()"
+        [placeholder]="searchPlaceholder()"
+        [value]="searchText()"
+        (input)="applySearch($any($event.target).value)"
+        (keydown.enter)="submitSearch()"
+      />
+    }
+    <ng-content select="[toolbar-search]" />
+    <ng-content select="[toolbar-actions]" />
+    @if (chooser()) {
+      <dx-button
+        class="chooser"
+        icon="columnchooser"
+        stylingMode="outlined"
+        hint="Choose columns"
+        [elementAttr]="{ 'aria-label': 'Choose columns' }"
+        (onClick)="chooseColumns()"
+      />
+    }
+  </div>
+</div>
+@if (chips().length) {
+  <div class="chips" role="group" aria-label="Active filters">
+    <span class="chips__label">Filters</span>
+    @for (chip of chips(); track chip.key) {
+      <button
+        type="button"
+        class="chip"
+        [attr.aria-label]="'Remove filter ' + chip.label + ' ' + chip.value"
+        (click)="remove(chip)"
+      >
+        <span>{{ chip.label }}</span
+        ><b>{{ chip.value }}</b
+        ><i class="dx-icon dx-icon-close" aria-hidden="true"></i>
+      </button>
+    }
+    <button type="button" class="chips__clear" (click)="clearAll()">
+      Clear all
+    </button>
+  </div>
+}

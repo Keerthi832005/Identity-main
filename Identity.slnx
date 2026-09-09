@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Backend/IAM.Agent.Core/IAM.Agent.Core.csproj" />
+    <Project Path="src/Backend/IAM.Agent/IAM.Agent.csproj" />
+    <Project Path="src/Backend/IAM.Agent.Service/IAM.Agent.Service.csproj" />
+    <Project Path="src/Backend/Identity.AdminCli/Identity.AdminCli.csproj" />
+    <Project Path="src/Backend/Identity.Api/Identity.Api.csproj" />
+    <Project Path="src/Backend/Identity.Application/Identity.Application.csproj" />
+    <Project Path="src/Backend/Identity.Contracts/Identity.Contracts.csproj" />
+    <Project Path="src/Backend/Identity.Database/Identity.Database.csproj" />
+    <Project Path="src/Backend/Identity.Domain/Identity.Domain.csproj" />
+    <Project Path="src/Backend/Identity.Infrastructure/Identity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/Backend/Tests/IAM.Agent.Tests/IAM.Agent.Tests.csproj" />
+    <Project Path="src/Backend/Tests/Identity.AdminCli.Tests/Identity.AdminCli.Tests.csproj" />
+    <Project Path="src/Backend/Tests/Identity.Api.Tests/Identity.Api.Tests.csproj" />
+    <Project Path="src/Backend/Tests/Identity.Application.Tests/Identity.Application.Tests.csproj" />
+    <Project Path="src/Backend/Tests/Identity.Domain.Tests/Identity.Domain.Tests.csproj" />
+    <Project Path="src/Backend/Tests/Identity.Infrastructure.Tests/Identity.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

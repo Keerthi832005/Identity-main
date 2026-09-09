@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-2);
+  padding: var(--app-space-7) var(--app-space-4);
+  text-align: center;
+}
+
+.state .dx-icon {
+  color: var(--app-text-secondary);
+  font-size: 28px;
+  opacity: 0.65;
+}
+
+.state__title {
+  font-family: var(--app-font-display);
+  font-size: var(--app-font-size-subheading);
+  font-weight: 600;
+  margin: var(--app-space-2) 0 0;
+}
+
+.state__message {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-supporting);
+  line-height: var(--app-line-height-body);
+  margin: 0;
+  max-width: 44ch;
+}
+
+.state__reference {
+  color: var(--app-text-secondary);
+  font-family: var(--app-font-mono);
+  font-size: var(--app-font-size-caption);
+  margin: 0;
+}
+
+.state__actions {
+  display: flex;
+  gap: var(--app-space-2);
+  margin-top: var(--app-space-2);
+}
+
+.state__actions:not(:has(*)) {
+  display: none;
+}
+
+.state--error .dx-icon {
+  color: var(--app-danger);
+  opacity: 1;
+}

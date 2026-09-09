@@ -1,0 +1,277 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+/* The sign-in screen owns the whole viewport and never scrolls the page: a shorter laptop viewport
+   scrolls the affected column instead, so the brand bar and the form stay put. */
+.sign-in {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--page);
+  color: var(--text);
+}
+.sign-in__bar {
+  flex: 0 0 72px;
+  height: 72px;
+  padding: 0 clamp(20px, 4vw, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+.brand {
+  color: inherit;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+}
+.brand__mark img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.brand__lockup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.brand__logo {
+  display: block;
+  width: 92px;
+  max-height: 20px;
+  object-fit: contain;
+  object-position: left center;
+}
+.brand strong,
+.brand small {
+  display: block;
+}
+.brand strong {
+  letter-spacing: 0.12em;
+  font-size: 14px;
+}
+.brand small {
+  color: var(--muted);
+  margin-top: 2px;
+}
+.sign-in__layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+}
+.sign-in__intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(32px, 5vw, 96px) clamp(32px, 6vw, 112px);
+  background:
+    radial-gradient(
+      circle at 18% 10%,
+      color-mix(in srgb, var(--brand) 19%, transparent),
+      transparent 35%
+    ),
+    linear-gradient(150deg, var(--panel), var(--page));
+}
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--brand);
+  font:
+    600 12px "IBM Plex Mono",
+    monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+h1 {
+  max-width: 700px;
+  margin: 0;
+  font:
+    600 clamp(40px, 5.2vw, 68px)/0.98 "Barlow Condensed",
+    sans-serif;
+  letter-spacing: -0.025em;
+}
+.lead {
+  max-width: 640px;
+  color: var(--muted);
+  font-size: clamp(16px, 1.7vw, 19px);
+  line-height: 1.5;
+}
+.trust-grid {
+  display: grid;
+  gap: 10px;
+  max-width: 670px;
+  margin-top: 24px;
+}
+.trust-grid article {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  column-gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+.trust-grid i {
+  grid-row: span 2;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--brand);
+  border-radius: 11px;
+  background: var(--brand-soft);
+}
+.trust-grid strong {
+  align-self: end;
+}
+.trust-grid span {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+.sign-in__workspace {
+  padding: clamp(24px, 4vw, 72px) clamp(32px, 6vw, 88px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--surface);
+}
+.sign-in__card {
+  width: min(100%, 470px);
+  margin: auto;
+}
+h2 {
+  margin: 0;
+  font:
+    600 40px "Barlow Condensed",
+    sans-serif;
+}
+.muted {
+  color: var(--muted);
+  margin: 8px 0 28px;
+}
+form {
+  display: grid;
+  gap: 19px;
+}
+label span {
+  display: block;
+  margin-bottom: 7px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.mfa-code {
+  font:
+    600 25px "IBM Plex Mono",
+    monospace;
+  letter-spacing: 0.36em;
+  text-align: center;
+}
+.primary-action {
+  width: 100%;
+  margin-top: 5px;
+}
+.primary-action ::ng-deep .dx-button {
+  width: 100%;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.alert,
+.support-note {
+  display: flex;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.alert {
+  margin-bottom: 20px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+}
+.support-note {
+  margin-top: 28px;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+.support-note i {
+  color: var(--brand);
+}
+footer {
+  width: min(100%, 470px);
+  margin: 30px auto 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+@media (max-width: 900px) {
+  .sign-in__layout {
+    grid-template-columns: 1fr;
+  }
+  .sign-in__intro {
+    padding: 52px 24px;
+  }
+  .sign-in__workspace {
+    padding: 48px 24px;
+  }
+}
+@media (max-width: 540px) {
+  .sign-in__bar {
+    height: 64px;
+  }
+  .brand small {
+    display: none;
+  }
+  .sign-in__bar {
+    flex-basis: 64px;
+  }
+  .sign-in__intro {
+    display: none;
+  }
+  .sign-in__workspace {
+    padding: 36px 20px;
+  }
+}
+
+/* Confirms a credential pair was filled from the clipboard. Deliberately states that signing in is
+   still a separate act, because the paste does not submit. */
+.paste-notice {
+  align-items: center;
+  background: var(--app-primary-soft);
+  border: 1px solid var(--app-primary-border);
+  border-radius: var(--app-radius-md);
+  color: var(--app-text);
+  display: flex;
+  font-size: var(--app-font-size-caption);
+  gap: var(--app-space-2);
+  line-height: var(--app-line-height-body);
+  margin: 0;
+  padding: var(--app-space-2) var(--app-space-3);
+}
+
+.paste-notice .dx-icon {
+  color: var(--app-accent-text);
+  flex: none;
+}

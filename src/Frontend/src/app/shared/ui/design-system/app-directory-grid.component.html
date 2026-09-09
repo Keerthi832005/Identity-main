@@ -1,0 +1,54 @@
+<app-data-grid
+  [rows]="rows()"
+  [columns]="columns()"
+  [keyExpr]="idField()"
+  [heading]="label()"
+  [count]="total()"
+  [loading]="busy()"
+  searchMode="server"
+  [searchTerm]="search()"
+  [searchPlaceholder]="'Search ' + label().toLowerCase()"
+  (searchTermChange)="searchInput.emit($event); searchChange.emit($event)"
+  emptyText="No matching records. Try another search."
+>
+  <div *appGridCell="'directoryName'; let cell">
+    <a
+      [routerLink]="[basePath(), cell.data[idField()]]"
+      [queryParams]="queryParams()"
+      >{{ cell.value }}</a
+    >
+  </div>
+  <div *appGridCell="'directoryEntity'; let cell" class="entity-cell">
+    <a
+      class="entity-cell__name"
+      [routerLink]="[basePath(), cell.data[idField()]]"
+      [queryParams]="queryParams()"
+      >{{ cell.data.applicationName }}</a
+    >
+    @if (cell.data.description) {
+      <p class="entity-cell__description">{{ cell.data.description }}</p>
+    }
+    <span class="mono-chip">{{ cell.data.applicationCode }}</span>
+  </div>
+  <div *appGridCell="'directoryStatus'; let cell">
+    <span class="status" [class.inactive]="!cell.value">{{
+      cell.value ? "Active" : "Inactive"
+    }}</span>
+  </div>
+
+  <footer grid-footer>
+    <span>{{ total() ? skip() + 1 : 0 }}–{{ last() }} of {{ total() }}</span>
+    @if (total() > 50) {
+      <dx-button
+        text="Previous"
+        [disabled]="busy() || skip() === 0"
+        (onClick)="pageChange.emit(skip() - 50)"
+      />
+      <dx-button
+        text="Next"
+        [disabled]="busy() || last() >= total()"
+        (onClick)="pageChange.emit(skip() + 50)"
+      />
+    }
+  </footer>
+</app-data-grid>

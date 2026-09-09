@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Identity.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Identity.Infrastructure.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DevExpress.Document.Processor" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
+    <ProjectReference Include="..\Identity.Contracts\Identity.Contracts.csproj" />
+    <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
+  </ItemGroup>
+</Project>

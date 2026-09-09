@@ -1,0 +1,13 @@
+// Applies the MINI form standard.
+//
+// Its own partial so it keeps its place in the cascade: Sass hoists every @use to the top of the
+// entry file, so calling these mixins there would emit them after the grid rules instead of before
+// them. The order is deliberate - the form standard overrides the generic editor box, and the grid
+// rules in turn override the form standard where a grid renders an editor.
+
+@use "form-standard";
+
+// Page content and form overlays only, never the shell and never a data grid.
+@include form-standard.controls("app");
+@include form-standard.overlays("app");
+@include form-standard.record-lists;

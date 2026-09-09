@@ -1,0 +1,184 @@
+:host {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+/* The editor's own message overlay only appears on hover, so the required
+   message is rendered inline where it is always readable. */
+.control-error {
+  color: var(--app-danger);
+  display: block;
+  font-size: var(--app-font-size-caption);
+  line-height: 1.35;
+  margin-top: 0.3rem;
+}
+
+:host(.pts-input--checkbox) {
+  display: inline-flex;
+  width: auto;
+}
+
+:host(.native-input) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+}
+
+:host ::ng-deep .dx-texteditor {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-strong);
+  border-radius: 0.5rem;
+  box-sizing: border-box;
+  height: 40px;
+  min-height: 40px;
+  overflow: hidden;
+  width: 100%;
+}
+
+:host ::ng-deep .dx-texteditor.dx-state-focused {
+  border-color: var(--app-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-primary) 18%, transparent);
+}
+
+:host ::ng-deep .dx-texteditor-input {
+  color: var(--app-text);
+  font-family: inherit;
+  font-size: var(--app-font-size-body);
+  height: 38px;
+  line-height: 20px;
+  min-height: 38px;
+  padding: 9px 12px;
+}
+
+:host ::ng-deep .dx-texteditor-buttons-container {
+  align-items: center;
+  height: 100%;
+}
+
+/* The placeholder is a separate overlay element; keep its box identical to the
+   input box so the caret and the hint text start on exactly the same pixel.
+   The theme ships its own .dx-editor-* padding, so these selectors match it
+   class-for-class instead of relying on source order. */
+:host ::ng-deep .dx-texteditor:not(.dx-searchbox) .dx-placeholder::before {
+  padding-block: 9px;
+  padding-inline: 12px;
+}
+
+:host ::ng-deep .dx-texteditor.dx-searchbox .dx-texteditor-input,
+:host ::ng-deep .dx-texteditor.dx-searchbox .dx-placeholder::before {
+  padding-block: 9px;
+  padding-inline-start: 40px;
+  padding-inline-end: 40px;
+}
+
+:host ::ng-deep .dx-searchbox .dx-icon-search,
+:host ::ng-deep .dx-texteditor .dx-clear-button-area,
+:host ::ng-deep .dx-dropdowneditor-button,
+:host ::ng-deep .dx-dropdowneditor-icon {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  margin: 0;
+  min-width: 40px;
+  padding: 0;
+  width: 40px;
+}
+
+:host ::ng-deep .dx-searchbox .dx-icon-search {
+  font-size: 20px;
+  inset-block: 0;
+  inset-inline-start: 0;
+  line-height: 1;
+  position: absolute;
+}
+
+/* The theme draws the clear affordance as a filled grey circle with an
+   absolutely-positioned glyph sized for its own 22px box. Flatten it to a plain
+   muted glyph and let the 40px button area supply the hit target. */
+:host ::ng-deep .dx-texteditor .dx-clear-button-area .dx-icon-clear {
+  align-items: center;
+  background: none;
+  border-radius: 0;
+  color: var(--app-text-secondary);
+  display: flex;
+  font-size: 16px;
+  height: 16px;
+  inset: auto;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  min-width: 16px;
+  position: static;
+  transform: none;
+  width: 16px;
+}
+
+:host ::ng-deep .dx-texteditor .dx-clear-button-area .dx-icon-clear::before {
+  inset: auto;
+  margin: 0;
+  position: static;
+  width: auto;
+}
+
+:host
+  ::ng-deep
+  .dx-texteditor
+  .dx-texteditor-buttons-container
+  > .dx-clear-button-area {
+  margin-inline: 0;
+}
+
+:host ::ng-deep .dx-texteditor.dx-texteditor-empty .dx-clear-button-area {
+  display: none;
+}
+
+:host ::ng-deep .dx-dropdowneditor-button .dx-button-content {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  padding: 0;
+}
+
+:host ::ng-deep .dx-dropdowneditor .dx-texteditor-input,
+:host ::ng-deep .dx-dropdowneditor .dx-placeholder::before {
+  padding-inline-end: 44px;
+}
+
+:host ::ng-deep .dx-texteditor:not(.dx-textarea)::before,
+:host ::ng-deep .dx-texteditor:not(.dx-textarea)::after {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .dx-placeholder {
+  color: var(--app-text-secondary);
+  font-family: inherit;
+}
+
+:host ::ng-deep .dx-checkbox {
+  color: var(--app-text);
+  font-family: inherit;
+}
+
+:host ::ng-deep .dx-checkbox-icon {
+  border-color: var(--app-border-strong);
+}
+
+/* Secret fields ---------------------------------------------------------------
+   A secret is a text box masked in CSS rather than an input[type=password], because a browser's
+   credential manager binds to the password type and would offer the signed-in administrator their
+   own saved sign-in on a field that sets someone else's PIN. The reveal button unmasks it. */
+:host(.pts-input--secret) ::ng-deep .dx-texteditor-input {
+  -webkit-text-security: disc;
+  letter-spacing: 0.14em;
+}
+
+:host(.pts-input--secret.pts-input--revealed) ::ng-deep .dx-texteditor-input {
+  -webkit-text-security: none;
+  letter-spacing: normal;
+}

@@ -1,0 +1,254 @@
+<app-page
+  eyebrow="Bulk import"
+  title="Review before committing"
+  [subtitle]="
+    page()
+      ? page()!.batch.state === 'Committed' || committed()
+        ? 'Import applied. Review the recorded results below.'
+        : 'Review the staged rows. Paging and filtering do not change which valid rows will be committed.'
+      : 'Loading the staged batch.'
+  "
+>
+  <ng-container page-actions>
+    @if (page(); as loaded) {
+      <dx-button
+        stylingMode="outlined"
+        text="Discard batch"
+        icon="trash"
+        [disabled]="busy() || loaded.batch.state !== 'Staged'"
+        (onClick)="discard()"
+      />
+      @if (loaded.batch.invalidRows > 0) {
+        <dx-button
+          stylingMode="outlined"
+          icon="download"
+          [text]="'Download ' + loaded.batch.invalidRows + ' errors'"
+          [disabled]="busy()"
+          (onClick)="downloadErrors()"
+        />
+      }
+    }
+  </ng-container>
+
+  @if (loading() && !page()) {
+    <app-skeleton shape="row" [lines]="6" />
+  } @else if (!page() && failure()) {
+    <app-error-state
+      title="Batch unavailable"
+      [message]="failure()"
+      [correlationId]="correlationId()"
+      (retry)="load()"
+    />
+  } @else if (page(); as loaded) {
+    @if (failure(); as message) {
+      <app-inline-alert tone="danger" heading="Request could not be completed">
+        <p>{{ message }}</p>
+        <p>
+          Your last loaded rows are still shown. Refresh rows to check the
+          server before retrying.
+        </p>
+        @if (correlationId()) {
+          <p class="error-reference">Reference {{ correlationId() }}</p>
+        }
+      </app-inline-alert>
+    }
+    @if (committed(); as note) {
+      <app-inline-alert tone="success" heading="Commit applied">{{
+        note
+      }}</app-inline-alert>
+    }
+
+    <div class="batch-band">
+      <div class="stat">
+        <span class="stat__label">Rows read</span>
+        <span class="stat__value">{{ loaded.batch.totalRows }}</span>
+        <span class="stat__meta">{{
+          loaded.batch.fileName ?? "Pasted from the clipboard"
+        }}</span>
+      </div>
+      <div class="stat stat--ready">
+        <span class="stat__label">Will create</span>
+        <span class="stat__value">{{ loaded.batch.createRows }}</span>
+        <span class="stat__meta">new records</span>
+      </div>
+      <div class="stat">
+        <span class="stat__label">Will update</span>
+        <span class="stat__value">{{ loaded.batch.updateRows }}</span>
+        <span class="stat__meta">existing records</span>
+      </div>
+      <div class="stat stat--error">
+        <span class="stat__label">Need attention</span>
+        <span class="stat__value">{{ loaded.batch.invalidRows }}</span>
+        <span class="stat__meta">not written on commit</span>
+      </div>
+    </div>
+
+    <app-section heading="Staged rows" [flush]="true">
+      <ng-container section-actions>
+        <dx-button
+          stylingMode="outlined"
+          text="Refresh rows"
+          icon="refresh"
+          [disabled]="busy() || loading()"
+          (onClick)="load()"
+        />
+        <dx-button
+          [stylingMode]="needsAttentionOnly() ? 'contained' : 'outlined'"
+          [type]="needsAttentionOnly() ? 'default' : 'normal'"
+          text="Needs attention"
+          [disabled]="busy() || loading()"
+          (onClick)="setFilter(true)"
+        />
+        <dx-button
+          [stylingMode]="needsAttentionOnly() ? 'outlined' : 'contained'"
+          [type]="needsAttentionOnly() ? 'normal' : 'default'"
+          [text]="'All ' + loaded.batch.totalRows"
+          [disabled]="busy() || loading()"
+          (onClick)="setFilter(false)"
+        />
+      </ng-container>
+
+      <app-busy-overlay [busy]="busy()" label="Working on this batch…">
+        <div class="grid-wrap">
+          <dx-data-grid
+            aria-label="Staged import rows"
+            [dataSource]="source"
+            [remoteOperations]="remoteOperations"
+            height="100%"
+            width="100%"
+            [showBorders]="false"
+            [showRowLines]="true"
+            [rowAlternationEnabled]="true"
+            [allowColumnResizing]="true"
+            columnResizingMode="widget"
+            [disabled]="busy()"
+            [errorRowEnabled]="false"
+            noDataText="No rows match this filter."
+          >
+            <dxo-data-grid-sorting mode="none" />
+            <dxo-data-grid-scrolling mode="standard" showScrollbar="always" />
+            <dxo-data-grid-paging [enabled]="true" [pageSize]="25" />
+            <dxo-data-grid-pager
+              [visible]="true"
+              displayMode="adaptive"
+              [showPageSizeSelector]="true"
+              [allowedPageSizes]="pageSizes"
+              [showNavigationButtons]="true"
+              [showInfo]="true"
+              infoText="Page {0} of {1} ({2} rows)"
+            />
+            <dxi-data-grid-column
+              dataField="sourceRowNumber"
+              caption="Row"
+              [width]="70"
+              [fixed]="true"
+            />
+            <dxi-data-grid-column
+              dataField="state"
+              caption="Result"
+              [width]="115"
+              cellTemplate="resultCell"
+            />
+            @for (columnId of columnIds(); track columnId) {
+              <dxi-data-grid-column
+                [dataField]="'values.' + columnId"
+                [name]="columnId"
+                [caption]="columnId"
+                [width]="210"
+                cellTemplate="stagedCell"
+              />
+            }
+            <div *dxTemplate="let cell of 'stagedCell'" class="staged-cell">
+              <input
+                class="cell-editor"
+                [class.cell-editor--invalid]="
+                  !!errorFor(cell.data, cell.column.name)
+                "
+                [value]="cell.data.values[cell.column.name] ?? ''"
+                [disabled]="busy() || loading() || !editable(cell.data)"
+                [attr.aria-label]="
+                  cell.column.name + ' on row ' + cell.data.sourceRowNumber
+                "
+                [attr.aria-invalid]="!!errorFor(cell.data, cell.column.name)"
+                [attr.aria-describedby]="
+                  errorFor(cell.data, cell.column.name)
+                    ? 'error-' +
+                      cell.data.sourceRowNumber +
+                      '-' +
+                      cell.column.name
+                    : null
+                "
+                (change)="
+                  correct(
+                    cell.data,
+                    cell.column.name,
+                    $any($event.target).value
+                  )
+                "
+              />
+              @if (errorFor(cell.data, cell.column.name); as cellError) {
+                <span
+                  class="cell-error-text"
+                  [id]="
+                    'error-' +
+                    cell.data.sourceRowNumber +
+                    '-' +
+                    cell.column.name
+                  "
+                  >{{ cellError.message }}</span
+                >
+              }
+            </div>
+            <div *dxTemplate="let cell of 'resultCell'">
+              <span class="pill pill--{{ cell.data.state.toLowerCase() }}">{{
+                cell.data.state === "Invalid"
+                  ? cell.data.errors.length +
+                    (cell.data.errors.length === 1 ? " error" : " errors")
+                  : cell.data.state
+              }}</span>
+            </div>
+          </dx-data-grid>
+        </div>
+      </app-busy-overlay>
+
+      <div class="commit-bar">
+        <p>
+          @if (loaded.batch.state === "Committed") {
+            Import complete. <b>{{ loaded.batch.appliedRows }} rows applied.</b>
+            @if (loaded.batch.invalidRows > 0) {
+              Download the errors and import only the corrected rows in a new
+              batch.
+            }
+          } @else {
+            Committing writes all
+            <b>{{ willWrite() }} valid rows in this batch</b> —
+            {{ loaded.batch.createRows }} created,
+            {{ loaded.batch.updateRows }} updated.
+            @if (loaded.batch.invalidRows > 0) {
+              <b>{{ loaded.batch.invalidRows }} invalid rows</b> will not be
+              written. Fix them before committing, or import the corrected rows
+              in a new batch afterwards.
+            }
+          }
+        </p>
+        <dx-button
+          stylingMode="contained"
+          type="default"
+          [text]="
+            loaded.batch.state === 'Committed'
+              ? 'Import complete'
+              : 'Commit ' + willWrite() + ' rows'
+          "
+          [disabled]="
+            busy() ||
+            loading() ||
+            !!failure() ||
+            willWrite() === 0 ||
+            loaded.batch.state !== 'Staged'
+          "
+          (onClick)="commit()"
+        />
+      </div>
+    </app-section>
+  }
+</app-page>

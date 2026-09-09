@@ -1,0 +1,6 @@
+{
+  "identityBaseUrl": "/identity",
+  "identityClientId": "identity-admin-web",
+  "applicationName": "Identity Administration",
+  "devExtremeLicenseKey": ""
+}

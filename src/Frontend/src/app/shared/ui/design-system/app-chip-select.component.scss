@@ -1,0 +1,57 @@
+:host {
+  display: block;
+}
+
+.chip-select {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2);
+}
+
+.chip-select__label {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-caption);
+  font-weight: 600;
+  letter-spacing: var(--app-letter-spacing-label);
+  margin-right: var(--app-space-1);
+  text-transform: uppercase;
+}
+
+.chip-select__chip {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  color: var(--app-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--app-font-size-supporting);
+  padding: 0.4rem 0.9rem;
+}
+
+.chip-select__chip:hover:not(:disabled) {
+  border-color: var(--app-border-strong);
+}
+
+.chip-select__chip:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* The chosen option carries the accent; the rest stay neutral so the choice is the only thing
+   competing for attention. */
+.chip-select__chip.active {
+  background: var(--app-primary-soft);
+  border-color: var(--app-primary-border);
+  color: var(--app-accent-text);
+  font-weight: 600;
+}
+
+.chip-select__chip small {
+  color: var(--app-text-secondary);
+  margin-left: 0.35rem;
+}
+
+.chip-select__chip.active small {
+  color: inherit;
+}

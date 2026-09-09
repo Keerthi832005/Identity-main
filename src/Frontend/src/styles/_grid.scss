@@ -1,0 +1,333 @@
+// Data grid.
+//
+// Presentation for every dx-data-grid; behavioural options live in AppGridPresetDirective and
+// AppDataGridComponent. Only what DevExtreme renders in its own markup is styled here.
+
+/* Grid preset -----------------------------------------------------------------
+   Presentation for every dx-data-grid carrying appGridPreset. Behavioural options live in the
+   directive; only what DevExtreme renders in its own shadow markup is styled here. */
+.dx-datagrid-headers .dx-row > td {
+  background: var(--app-surface-muted);
+  color: var(--app-text-secondary);
+  font-family: var(--app-font-display);
+  font-size: var(--app-font-size-caption);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dx-datagrid {
+  background: transparent;
+  border-radius: calc(var(--app-radius-md) - 4px);
+  color: var(--app-text);
+  overflow: hidden;
+}
+
+.dx-datagrid-headers {
+  border-bottom: 1px solid var(--app-border);
+}
+
+.dx-datagrid-headers .dx-row > td {
+  border-bottom: 0;
+  padding: var(--app-space-2) var(--app-space-3);
+}
+
+/* One type scale for the whole table. DevExtreme leaves cells at the widget's 14px, which is the
+   page's own body size, so a grid read as running text and sat level with its own heading. */
+.dx-datagrid-rowsview .dx-row > td {
+  font-size: var(--app-font-size-supporting);
+  padding: var(--app-space-3);
+  vertical-align: middle;
+}
+
+.dx-datagrid-rowsview .dx-row-lines > td {
+  border-bottom: 1px solid var(--app-border);
+}
+
+/* The card already draws the bottom edge; a second line under the last row reads as a stray rule. */
+.dx-datagrid-rowsview .dx-data-row:last-child > td {
+  border-bottom: 0;
+}
+
+/* Row states are neutral by design. The brand accent is a red, so tinting a hovered or focused
+   row with it makes an ordinary pointer move look like a rejected record. Selection is the one
+   state that earns the accent, and then only as a soft fill with a leading bar. */
+.dx-datagrid-rowsview
+  .dx-data-row.dx-state-hover:not(.dx-selection)
+  > td:not(.dx-focused) {
+  background: var(--app-surface-muted) !important;
+  color: var(--app-text) !important;
+}
+
+.dx-datagrid-rowsview .dx-row-focused.dx-data-row > td:not(.dx-focused) {
+  background: var(--app-surface-muted) !important;
+  color: var(--app-text) !important;
+}
+
+.dx-datagrid-rowsview .dx-selection.dx-data-row > td:not(.dx-focused),
+.dx-datagrid-rowsview
+  .dx-selection.dx-data-row.dx-state-hover
+  > td:not(.dx-focused) {
+  background: var(--app-primary-soft) !important;
+  color: var(--app-text) !important;
+}
+
+.dx-datagrid-rowsview .dx-selection.dx-data-row > td:first-child {
+  box-shadow: inset 3px 0 var(--app-primary);
+}
+
+/* DevExtreme tracks the focused cell with an absolutely positioned overlay whose border it paints
+   in the accent colour. The accent here is a red, so every focused cell - including a filter-row
+   cell someone is simply typing in - was framed in what reads as a validation error. */
+.dx-datagrid-focus-overlay {
+  border-color: var(--app-border-strong) !important;
+  border-radius: 2px;
+  border-width: 1px !important;
+}
+
+/* Keyboard cell focus: one neutral ring, never a filled accent block. */
+.dx-datagrid-rowsview .dx-row > td.dx-focused {
+  background: var(--app-surface-muted) !important;
+  box-shadow: inset 0 0 0 2px var(--app-focus-ring) !important;
+  color: var(--app-text) !important;
+  outline: 2px solid transparent !important;
+  outline-offset: -2px !important;
+}
+
+/* Filter row -------------------------------------------------------------------
+   With the grid excluded from the MINI form standard (_mini-controls.scss) the editors already
+   render as DevExtreme's flat cells, matching the PTS grid. What is left here is the row's own
+   presentation: its height, its ground and the one edge it draws. */
+.dx-datagrid-filter-row {
+  --app-editor-height: 34px;
+  --app-editor-inner-height: 34px;
+  --app-editor-line-height: 18px;
+  --app-editor-pad-block: 8px;
+  --app-editor-pad-inline: 8px;
+  --app-editor-affordance: 26px;
+  --app-editor-radius: 0;
+}
+
+/* Scoped through .dx-datagrid-headers so it outranks the header-band background the captions
+   above it use - the filter row is its own band, not part of that one. */
+.dx-datagrid-headers .dx-datagrid-filter-row > td {
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border) !important;
+  /* The data rows carry no column lines; the filter row drew its own and boxed every cell. */
+  border-left: 0 !important;
+  border-right: 0 !important;
+  padding: 0 var(--app-space-2) !important;
+  vertical-align: middle;
+}
+
+/* The editor is the cell. A white editor box on the row's own ground was the only thing still
+   drawing a rectangle around each filter. */
+.dx-datagrid-filter-row .dx-editor-cell .dx-texteditor,
+.dx-datagrid-filter-row .dx-editor-cell .dx-texteditor-container,
+.dx-datagrid-filter-row .dx-editor-cell .dx-texteditor-input {
+  /* Forced past the generated .dx-swatch-* rule, which paints the input a shade lighter than the
+     row - in dark that turned each filter into a visible block with gaps reading as column rules. */
+  background: transparent !important;
+  border-radius: 0;
+  font-size: var(--app-font-size-caption);
+}
+
+/* No rule of its own under a focused filter cell. DevExtreme already frames the focused cell with
+   .dx-datagrid-focus-overlay, and a bar underneath it only doubled the bottom edge. */
+
+.dx-datagrid-filter-row .dx-editor-cell .dx-placeholder::before,
+.dx-datagrid-filter-row .dx-editor-cell .dx-icon-search,
+.dx-datagrid-filter-row .dx-editor-cell .dx-icon-filteroperations {
+  color: var(--app-text-secondary);
+}
+
+/* "(All)" is the unfiltered state, so it reads as a placeholder rather than as a chosen value. */
+.dx-datagrid-filter-row .dx-editor-cell .dx-selectbox .dx-texteditor-input {
+  color: var(--app-text-secondary);
+}
+
+/* The operations glyph belongs to the flat row whether its menu is open or not. */
+.dx-datagrid-filter-row .dx-menu,
+.dx-datagrid-filter-row .dx-menu-item,
+.dx-datagrid-filter-row .dx-menu-item.dx-state-hover,
+.dx-datagrid-filter-row .dx-menu-item.dx-state-focused,
+.dx-datagrid-filter-row .dx-menu-item.dx-menu-item-expanded {
+  background: transparent !important;
+}
+
+.dx-datagrid-filter-row .dx-menu-item.dx-state-hover .dx-icon,
+.dx-datagrid-filter-row .dx-menu-item.dx-menu-item-expanded .dx-icon {
+  color: var(--app-text);
+}
+
+/* The swatch rings a hovered menu item in the accent, which is a red, so simply pointing at the
+   operations glyph framed it in what reads as an error. The cell's own focus frame is the only
+   border this row needs. */
+.dx-datagrid-filter-row .dx-menu-item,
+.dx-datagrid-filter-row .dx-menu-item.dx-state-hover,
+.dx-datagrid-filter-row .dx-menu-item.dx-state-focused,
+.dx-datagrid-filter-row .dx-menu-item.dx-menu-item-expanded {
+  border-radius: 4px;
+  outline: 0 !important;
+}
+
+/* While its menu is open DevExtreme frames the glyph with a bordered, shadowed box of its own.
+   The open menu is already the affordance; the box just re-boxed the cell we flattened. */
+.dx-datagrid-filter-row .dx-context-menu-container-border {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Header filter and sort glyphs sit with the caption rather than floating over it. */
+.dx-datagrid-headers .dx-header-filter {
+  color: var(--app-text-secondary);
+  font-size: 14px;
+  margin-inline-start: var(--app-space-1);
+}
+
+.dx-datagrid-headers .dx-header-filter-empty {
+  opacity: 0.55;
+}
+
+.dx-datagrid-headers .dx-header-filter:not(.dx-header-filter-empty) {
+  color: var(--app-accent-text);
+  opacity: 1;
+}
+
+.dx-datagrid-pager {
+  border-top: 1px solid var(--app-border);
+  font-size: var(--app-font-size-supporting);
+  padding-block: var(--app-space-2);
+}
+
+/* The pager sets its own size on these, so inheriting from the band above is not enough. */
+.dx-datagrid-pager .dx-page,
+.dx-datagrid-pager .dx-page-size,
+.dx-datagrid-pager .dx-info,
+.dx-datagrid-pager .dx-pages,
+.dx-datagrid-pager .dx-page-sizes {
+  font-size: var(--app-font-size-supporting);
+}
+
+.dx-datagrid-nodata {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-supporting);
+}
+
+/* Grid menus and the header-filter list are the table's own text, not page body copy. */
+.dx-context-menu.dx-filter-menu .dx-menu-item,
+.dx-header-filter-menu .dx-overlay-content,
+.dx-datagrid-column-chooser .dx-overlay-content {
+  font-size: var(--app-font-size-supporting);
+}
+
+/* Grid menus ---------------------------------------------------------------------
+   The filter-operation chooser, the header-filter list and the column chooser all render into a
+   body portal, so they miss every component scope and arrived as stock DevExtreme: square corners,
+   a hard grey hairline and a flat edge-to-edge hover band. One surface language, shared with the
+   editor drop-downs. */
+.dx-context-menu.dx-filter-menu > .dx-submenu,
+.dx-header-filter-menu .dx-overlay-content,
+.dx-datagrid-column-chooser .dx-overlay-content {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--app-text) 18%, transparent);
+  color: var(--app-text);
+  overflow: hidden;
+  padding-block: var(--app-space-1);
+}
+
+.dx-context-menu.dx-filter-menu .dx-menu-item {
+  border-radius: 0;
+  color: var(--app-text);
+}
+
+.dx-context-menu.dx-filter-menu .dx-menu-item .dx-menu-item-content {
+  padding: 8px 14px;
+}
+
+.dx-context-menu.dx-filter-menu .dx-menu-item .dx-icon {
+  color: var(--app-text-secondary);
+}
+
+.dx-context-menu.dx-filter-menu .dx-menu-item.dx-state-hover,
+.dx-context-menu.dx-filter-menu .dx-menu-item.dx-state-focused {
+  background: var(--app-primary-soft) !important;
+  color: var(--app-text) !important;
+}
+
+/* The operation in force, marked the way a chosen row is marked everywhere else in the product. */
+.dx-context-menu.dx-filter-menu .dx-menu-item.dx-menu-item-selected {
+  background: var(--app-primary-soft) !important;
+  box-shadow: inset 3px 0 var(--app-primary);
+  color: var(--app-text) !important;
+  font-weight: 600;
+}
+
+.dx-context-menu.dx-filter-menu .dx-menu-item.dx-menu-item-selected .dx-icon {
+  color: var(--app-accent-text);
+}
+
+/* The header-filter popup carries role="dialog", so the MINI form standard reaches its search box
+   and underlines it in the accent on focus. That accent is a red, and this is a grid affordance,
+   not a form field someone can get wrong. */
+.dx-header-filter-menu .dx-texteditor.dx-state-focused {
+  border-bottom-color: var(--app-text-secondary) !important;
+  box-shadow: inset 0 -1px var(--app-text-secondary) !important;
+}
+
+.app-grid--compact .dx-datagrid-rowsview .dx-row > td {
+  padding-block: var(--app-space-1);
+}
+
+.app-grid--compact .dx-datagrid-headers .dx-row > td {
+  padding-block: var(--app-space-1);
+}
+
+/* A link in a cell is the row's own text, not a separate blue-and-underlined element. It reads as
+   part of the column and only announces itself on hover, which is what a whole column of links
+   needs to stay legible. */
+.dx-datagrid-rowsview .dx-data-row a {
+  color: var(--app-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dx-datagrid-rowsview .dx-data-row a:hover,
+.dx-datagrid-rowsview .dx-data-row a:focus-visible {
+  color: var(--app-accent-text);
+  text-decoration: underline;
+}
+
+/* Values compared character by character line up only with tabular figures. */
+.app-cell-mono {
+  font-family: var(--app-font-mono);
+  font-size: var(--app-font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus affordance inside an editor -------------------------------------------
+   A reveal, clear or drop-down button belongs to the field, not beside it. The standalone-button
+   rule in mini-controls draws a hard accent ring offset outward, which overlaps the field border;
+   its :not(.dx-texteditor-button) guard does not cover this kit's own reveal button. Because the
+   brand accent is a red, that ring is indistinguishable from a validation failure - on the sign-in
+   form someone typing a password sees red and assumes they got it wrong.
+
+   Matched on .dx-state-focused because that is the class DevExtreme actually sets. The outline is
+   forced: the mini-controls rule scores higher on specificity, and this file already uses the same
+   escape hatch to hold the editor standard. The transparent value is deliberate - Windows High
+   Contrast ignores background and box-shadow, so an outline must still be there to paint. */
+body .dx-texteditor .dx-button.dx-state-focused,
+body .dx-texteditor .dx-button:focus-visible,
+body .dx-texteditor .dx-texteditor-buttons-container button:focus-visible {
+  /* Transparent, not a tinted fill: the button sits on the editor's own ground, and an accent
+     square behind the reveal icon read as a second control stuck to the side of the field. The
+     inset ring below is the whole focus affordance. */
+  background: transparent;
+  border-radius: 6px;
+  /* Inset, so the ring can never spill past the button and clip the field's own right border. */
+  box-shadow: inset 0 0 0 2px var(--app-focus-ring);
+  outline: 2px solid transparent !important;
+  outline-offset: -2px !important;
+}

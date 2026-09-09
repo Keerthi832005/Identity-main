@@ -1,0 +1,335 @@
+<div
+  [hidden]="editorActive()"
+  [attr.inert]="saving() ? '' : null"
+  appBulkPaste="organization-units"
+  [pasteColumns]="bulkColumns"
+>
+  <app-page
+    eyebrow="Access"
+    [title]="title()"
+    subtitle="Geography, departments and teams in one hierarchy."
+  >
+    <ng-container page-actions>
+      <app-bulk-actions
+        entityKey="organization-units"
+        entityLabel="organization units"
+        [columns]="bulkColumns"
+        [exportRowsProvider]="exportUnits"
+        (failed)="notice.set($event)"
+      />
+      <dx-button
+        text="New organization"
+        icon="add"
+        type="default"
+        [disabled]="saving()"
+        (onClick)="openCreate()"
+      />
+    </ng-container>
+    @if (notice(); as message) {
+      <app-inline-alert tone="info">{{ message }}</app-inline-alert>
+    }
+    <nav class="type-navigation" aria-label="Organization unit types">
+      @for (unitType of types; track unitType) {
+        <button
+          type="button"
+          [attr.aria-pressed]="type() === unitType"
+          (click)="chooseType(unitType)"
+        >
+          {{ labels[unitType] }}
+          @if (counts()[unitType] !== undefined) {
+            <span class="type-count">{{ counts()[unitType] }}</span>
+          }
+        </button>
+      }
+    </nav>
+    <!-- Only once there is somewhere to go back to: on its own, "All organizations" is a link to
+         the page you are already on. -->
+    @if (organization() || trail().length) {
+      <nav class="scope-bar" aria-label="Browsing path">
+        <button type="button" (click)="reset()">All organizations</button>
+        @if (organization(); as org) {
+          <span aria-hidden="true">/</span>
+          @if (trail().length) {
+            <button type="button" (click)="scope(trail()[0])">
+              {{ org.name }}
+            </button>
+          } @else {
+            <span aria-current="page">{{ org.name }}</span>
+          }
+        }
+        @for (node of trail(); track node.organizationUnitId) {
+          <span aria-hidden="true">/</span>
+          @if ($last) {
+            <span aria-current="page">{{ node.unitName }}</span>
+          } @else {
+            <button type="button" (click)="browse(node)">
+              {{ node.unitName }}
+            </button>
+          }
+        }
+      </nav>
+    }
+    @if (error(); as message) {
+      <app-error-state
+        title="The unit list could not be loaded"
+        [message]="message"
+        retryLabel="Retry list"
+        (retry)="load(page().skip)"
+      />
+    }
+    @if (hasStateConflict()) {
+      <app-inline-alert tone="warning" heading="Changed by someone else">
+        {{ conflictMessage() }}
+        <dx-button
+          text="Show the current version"
+          stylingMode="contained"
+          type="default"
+          (onClick)="reloadState()"
+        />
+      </app-inline-alert>
+    }
+    @if (!detailView()) {
+      <section
+        class="unit-list"
+        aria-label="Organization units"
+        [attr.aria-busy]="loading()"
+      >
+        @if (loading()) {
+          <header>
+            <strong>{{ page().totalCount }} results</strong
+            ><small>20 per page</small>
+          </header>
+          <app-skeleton shape="row" [lines]="6" />
+        } @else {
+          <app-data-grid
+            flush
+            heading="Organization units"
+            ariaLabel="Organization units"
+            [count]="page().totalCount + ' results'"
+            [rows]="rows()"
+            [columns]="unitColumns"
+            keyExpr="unit.organizationUnitId"
+            searchMode="server"
+            [searchTerm]="search()"
+            searchPlaceholder="Search code, name or description"
+            (searchTermChange)="search.set($event); load()"
+            emptyText="No units match these filters. Change the type filter or search, or paste rows to import a branch."
+          >
+            <small toolbar-lead class="page-size">20 per page</small>
+            <app-select
+              toolbar-actions
+              class="state-filter"
+              ariaLabel="Active state filter"
+              [value]="state()"
+              (change)="state.set($any($event.target).value); load()"
+              ><app-option value="">All states</app-option
+              ><app-option value="true">Active</app-option
+              ><app-option value="false">Inactive</app-option></app-select
+            >
+            <div
+              *appGridCell="'unitName'; let cell"
+              class="unit-row"
+              [style.--depth]="cell.data.depth"
+            >
+              @if (cell.data.expandable) {
+                <button
+                  type="button"
+                  class="unit-toggle"
+                  [attr.aria-expanded]="cell.data.expanded"
+                  [attr.aria-label]="
+                    (cell.data.expanded ? 'Collapse ' : 'Expand ') +
+                    cell.data.unit.unitName
+                  "
+                  [disabled]="cell.data.loading"
+                  (click)="toggle(cell.data.unit)"
+                >
+                  <i
+                    class="dx-icon"
+                    [class.dx-icon-chevrondown]="cell.data.expanded"
+                    [class.dx-icon-chevronnext]="!cell.data.expanded"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              }
+              <button
+                type="button"
+                class="unit-item"
+                [class.selected]="
+                  detail()?.organizationUnitId ===
+                  cell.data.unit.organizationUnitId
+                "
+                (click)="select(cell.data.unit)"
+              >
+                <span>
+                  <small>{{ cell.data.unit.unitType }}</small>
+                  <strong>{{ cell.data.unit.unitName }}</strong>
+                </span>
+              </button>
+              @if (cell.data.expanded && cell.data.hiddenChildren > 0) {
+                <button
+                  type="button"
+                  class="branch-link"
+                  (click)="browse(cell.data.unit)"
+                >
+                  More children
+                </button>
+              }
+            </div>
+            <div *appGridCell="'unitState'; let cell">
+              <span class="state" [class.inactive]="!cell.value">{{
+                cell.value ? "Active" : "Inactive"
+              }}</span>
+            </div>
+          </app-data-grid>
+        }
+        <footer class="pagination">
+          <dx-button
+            text="Previous"
+            [disabled]="loading() || page().skip === 0"
+            (onClick)="load(page().skip - page().take)"
+          /><span>Page {{ pageNumber() }} of {{ pageCount() }}</span
+          ><dx-button
+            text="Next"
+            [disabled]="
+              loading() || page().skip + page().take >= page().totalCount
+            "
+            (onClick)="load(page().skip + page().take)"
+          />
+        </footer>
+      </section>
+    } @else {
+      <section
+        class="unit-detail"
+        aria-label="Unit details"
+        [attr.aria-busy]="detailLoading()"
+      >
+        <app-back-button
+          text="Back to organization units"
+          (back)="backToDirectory()"
+        />
+        @if (detailLoading()) {
+          <app-skeleton [lines]="5" />
+        } @else if (detailError(); as message) {
+          <app-error-state
+            title="These details could not be loaded"
+            [message]="message"
+            retryLabel="Retry details"
+            (retry)="retryDetail()"
+          />
+        } @else if (detail(); as unit) {
+          <nav class="breadcrumbs" aria-label="Unit ancestors">
+            @for (ancestor of ancestors(); track ancestor.organizationUnitId) {
+              <button type="button" (click)="browse(ancestor)">
+                {{ ancestor.unitName }}</button
+              ><span aria-hidden="true">/</span>
+            }
+            <span>{{ unit.unitName }}</span>
+          </nav>
+          <header class="detail-header">
+            <div>
+              <p>{{ unit.unitType }} · {{ unit.unitCode }}</p>
+              <h2>{{ unit.unitName }}</h2>
+            </div>
+            <span class="state" [class.inactive]="!unit.isActive">{{
+              unit.isActive ? "Active" : "Inactive"
+            }}</span>
+          </header>
+          <div class="detail-actions">
+            @if (childTypes[unit.unitType].length) {
+              <dx-button
+                text="Browse children"
+                icon="hierarchy"
+                (onClick)="browse(unit)"
+              />
+            }
+            <dx-button
+              text="Scope to organization"
+              stylingMode="outlined"
+              (onClick)="scope(unit)"
+            />
+          </div>
+          <div class="detail-actions">
+            <dx-button
+              text="Edit details"
+              icon="edit"
+              [disabled]="saving()"
+              (onClick)="openEdit()"
+            />
+            <dx-button
+              [text]="unit.isActive ? 'Deactivate' : 'Activate'"
+              [disabled]="saving() || hasStateConflict()"
+              (onClick)="toggleActive()"
+            />
+            @for (childType of childTypes[unit.unitType]; track childType) {
+              <dx-button
+                [text]="'New ' + childType"
+                [disabled]="saving() || !unit.isActive"
+                (onClick)="openCreate(childType, unit)"
+              />
+            }
+          </div>
+          @if (!unit.isActive && childTypes[unit.unitType].length) {
+            <p class="help">Activate this parent before creating a child.</p>
+          }
+          <h3>Description</h3>
+          <p class="description">
+            {{ unit.description || "No description provided." }}
+          </p>
+          <h3>Physical address</h3>
+          @for (line of addressLines(unit); track $index) {
+            <p class="address-line">{{ line }}</p>
+          } @empty {
+            <p class="muted">No address provided.</p>
+          }
+          @if (
+            unit.address.latitude !== null || unit.address.longitude !== null
+          ) {
+            <p>
+              Coordinates: {{ unit.address.latitude ?? "—" }},
+              {{ unit.address.longitude ?? "—" }}
+            </p>
+          }
+          <dl>
+            <dt>Organization ID</dt>
+            <dd>{{ unit.organizationId }}</dd>
+            <dt>Unit ID</dt>
+            <dd>{{ unit.organizationUnitId }}</dd>
+            <dt>Parent unit ID</dt>
+            <dd>{{ unit.parentOrganizationUnitId ?? "Root" }}</dd>
+            <dt>Canonical path</dt>
+            <dd>
+              <code>{{ unit.hierarchyPath }}</code>
+            </dd>
+            <dt>Created (UTC)</dt>
+            <dd>{{ unit.createdAt | date: "medium" : "UTC" }}</dd>
+            <dt>Updated (UTC)</dt>
+            <dd>
+              {{
+                unit.updatedAt
+                  ? (unit.updatedAt | date: "medium" : "UTC")
+                  : "Not updated"
+              }}
+            </dd>
+          </dl>
+          <aside class="help">
+            Active state belongs to this unit. It does not change descendants or
+            permissions. Organization, type and parent relationships are fixed.
+          </aside>
+        } @else {
+          <div class="empty-detail">
+            <i class="dx-icon dx-icon-hierarchy" aria-hidden="true"></i>
+            <h2>Select a unit</h2>
+            <p>
+              Select a record in the directory to view its complete details.
+            </p>
+          </div>
+        }
+      </section>
+    }
+  </app-page>
+</div>
+
+<router-outlet
+  (activate)="activateEditor($event)"
+  (deactivate)="deactivateEditor()"
+/>

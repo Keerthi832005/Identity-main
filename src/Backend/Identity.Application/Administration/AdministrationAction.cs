@@ -1,0 +1,30 @@
+namespace Identity.Application.Administration;
+
+public enum AdministrationAction
+{
+    CreateApplication,
+    CreateUser,
+    CreateApplicationClient,
+    CreateModule,
+    CreateCapability,
+    GrantUserApplication,
+    CreateRole,
+    AssignRole,
+    GrantRolePermission,
+    SetUserPermissionOverride,
+    RegisterDevice,
+    ChangeResourceState,
+    SetPassword,
+    SetPin,
+    EnrollMfa,
+    VerifyMfa,
+    RevokeMfa,
+    TrustDevice,
+    UpdateUserProfile,
+    CreateOrganization,
+    CreateOrganizationUnit,
+    ReadOrganization,
+    UpdateOrganizationUnit,
+    StageBulkImport,
+    CommitBulkImport,
+}

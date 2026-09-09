@@ -1,0 +1,11 @@
+// Global stylesheet. Everything lives in styles/ partials; this file only orders them.
+//
+// Order is the cascade: tokens define the custom properties every later partial reads, base sets
+// the document defaults, then each partial themes one surface. Nothing but @use belongs here.
+
+@use "styles/tokens";
+@use "styles/base";
+@use "styles/editors";
+@use "styles/overlays";
+@use "styles/form-applied";
+@use "styles/grid";

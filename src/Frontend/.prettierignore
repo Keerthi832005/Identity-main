@@ -1,0 +1,11 @@
+dist
+node_modules
+.angular
+package-lock.json
+public/config.json
+test-results
+playwright-report
+
+# Generated vendor theme assets and immutable license setup.
+src/theme/dx-theme-*.css
+src/devextreme-license.ts

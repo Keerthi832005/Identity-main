@@ -1,0 +1,113 @@
+<app-page
+  eyebrow="Identity control plane"
+  [title]="'Welcome back, ' + auth.displayName()"
+  subtitle="Applications, people, access and the audit trail for this identity service."
+>
+  @if (loading()) {
+    <app-skeleton shape="card" [lines]="4" />
+    <app-skeleton shape="row" [lines]="5" />
+  } @else if (error(); as message) {
+    <app-error-state
+      title="Dashboard unavailable"
+      [message]="message"
+      [correlationId]="correlationId()"
+      (retry)="load()"
+    />
+  } @else if (dashboard(); as data) {
+    <div class="metrics">
+      @for (metric of metrics(); track metric.label) {
+        <a
+          class="metric"
+          [class.metric--warning]="metric.tone === 'warning'"
+          [class.metric--danger]="metric.tone === 'danger'"
+          [routerLink]="metric.route"
+        >
+          <span class="metric__label">{{ metric.label }}</span>
+          <span class="metric__value">{{ metric.value }}</span>
+          <span class="metric__meta">{{ metric.meta }}</span>
+          @if (metric.sparkline?.length) {
+            <dx-sparkline
+              class="metric__spark"
+              [dataSource]="metric.sparkline"
+              argumentField="hourLabel"
+              valueField="failed"
+              type="bar"
+              [barPositiveColor]="chartPalette.palette().danger"
+              [tooltip]="{ enabled: true }"
+            ></dx-sparkline>
+          }
+        </a>
+      }
+    </div>
+
+    <app-section heading="Failed sign-ins by hour" caption="Last 24 hours">
+      <ng-container section-actions>
+        <app-chip-select
+          [options]="failuresViewOptions"
+          [value]="failuresView()"
+          (valueChange)="setFailuresView($event)"
+        />
+      </ng-container>
+      @if (failuresView() === "chart") {
+        <dx-chart
+          [dataSource]="trend()"
+          [series]="trendSeries()"
+          [argumentAxis]="{
+            label: { overlappingBehavior: 'rotate', rotationAngle: -45 },
+          }"
+          [valueAxis]="[{ allowDecimals: false, minValueMargin: 0 }]"
+          [tooltip]="{ enabled: true }"
+          [legend]="{ visible: true, verticalAlignment: 'top' }"
+          [size]="{ height: 260 }"
+        ></dx-chart>
+      } @else {
+        <app-data-grid
+          flush
+          density="compact"
+          ariaLabel="Sign-ins by hour"
+          [rows]="trend()"
+          [columns]="hourlyColumns"
+          keyExpr="hour"
+          emptyText="No sign-in activity in the last 24 hours."
+        />
+      }
+    </app-section>
+
+    <!-- Not flush: the grid inside is already flush, and zeroing both ran the rows into the
+         card's edge. The section supplies the inset. -->
+    <app-section heading="Recent activity" caption="Newest events first">
+      <ng-container section-actions>
+        <app-chip-select
+          [options]="activityFilterOptions"
+          [value]="activityFilter()"
+          (valueChange)="setActivityFilter($event)"
+        />
+      </ng-container>
+      <app-data-grid
+        flush
+        density="compact"
+        [wordWrap]="false"
+        ariaLabel="Recent audit events"
+        [rows]="filteredActivityRows()"
+        [columns]="activityColumns"
+        keyExpr="authenticationAuditId"
+        [pageSize]="10"
+        [pageSizes]="[10, 25, 50]"
+        emptyText="No audit events yet."
+      >
+        <div *appGridCell="'outcomeChip'; let cell">
+          <span
+            class="outcome-chip"
+            [class.outcome-chip--danger]="!cell.data.succeeded"
+          >
+            {{ cell.data.outcome }}
+          </span>
+        </div>
+      </app-data-grid>
+    </app-section>
+
+    <p class="generated" role="status">
+      Generated {{ formatDate(data.generatedAt) }}
+    </p>
+  }
+</app-page>

@@ -1,0 +1,63 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+footer span {
+  margin-right: auto;
+  color: var(--text-muted);
+}
+
+.status {
+  color: var(--success);
+  background: var(--success-soft);
+  padding: 0.3rem 0.55rem;
+  border-radius: 4px;
+}
+
+.inactive {
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+}
+
+/* Name, description and code chip stacked: side by side, a long name and its code
+   collide and wrap badly (e.g. "Application Administrator" / "application-administrator"). */
+.entity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.entity-cell__name {
+  font-weight: 600;
+}
+
+.entity-cell__description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* Matches the .mono-chip convention in application-catalog.component.scss so the
+   applications list and the roles table present the same code-chip treatment. */
+.mono-chip {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-family: var(--app-font-mono);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}

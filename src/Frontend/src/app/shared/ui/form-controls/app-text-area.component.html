@@ -1,0 +1,16 @@
+<dx-text-area
+  [value]="value ?? ''"
+  [disabled]="disabled"
+  [readOnly]="readonly"
+  [placeholder]="placeholder"
+  [maxLength]="maxLength || null"
+  [autoResizeEnabled]="true"
+  [minHeight]="96"
+  valueChangeEvent="input change"
+  [inputAttr]="inputAttributes"
+  (onInitialized)="captureEditor($any($event).component)"
+  (onValueChanged)="emitValue($event.value, $event.event)"
+/>
+@if (validationError()) {
+  <span class="control-error" role="alert">{{ validationError() }}</span>
+}

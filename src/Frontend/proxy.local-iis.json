@@ -1,0 +1,7 @@
+{
+  "/identity/**": {
+    "target": "https://iam.local.fujitecindia.com",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

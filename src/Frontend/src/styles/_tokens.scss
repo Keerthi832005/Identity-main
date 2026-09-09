@@ -1,0 +1,256 @@
+// Design tokens.
+//
+// Two layers live here. The --dx-* layer is DevExtreme's own documented theming surface; the
+// --app-* layer is this product's kit, and it reads from the --dx-* one so a single change of
+// accent or border colour moves both the widgets and everything built around them.
+
+/* DevExtreme theme layer -------------------------------------------------------
+   These are DevExtreme's own documented theming properties. The generated ThemeBuilder swatches
+   declare them under `.dx-swatch-iam-{mode} :root`, which cannot match anything: :root is <html>,
+   and <html> is never a descendant of the swatch class the theme service puts on <body>. So the
+   whole variable layer was inert and every widget rendered from the literals compiled into the
+   swatch rules - which is why theming this product previously meant overriding rendered CSS.
+
+   Re-declaring them here, on the element that actually carries the swatch class, puts them back in
+   force. They are kept in our own source rather than patched into src/theme/*.css because those
+   files are generated and a regeneration would silently drop the fix.
+
+   Values follow the DevExtreme Generic theme contract; see the CSS custom properties reference in
+   the DevExtreme theming docs. */
+body.dx-swatch-iam-light,
+body.dx-swatch-iam-dark {
+  --dx-color-primary: #d01126;
+  --dx-color-danger: #ea580c;
+  --dx-color-success: #8bc34a;
+  --dx-color-warning: #ffc107;
+  --dx-color-link: var(--dx-color-primary);
+  --dx-border-radius: 8px;
+  --dx-border-width: 1px;
+  --dx-font-size: 14px;
+  --dx-component-height: 40px;
+}
+
+body.dx-swatch-iam-light {
+  --dx-component-color-bg: #ffffff;
+  --dx-color-main-bg: #f4f4f6;
+  --dx-color-text: #1f2126;
+  --dx-color-icon: #6b7078;
+  --dx-color-border: #e6e6ea;
+  --dx-color-separator: #e6e6ea;
+  --dx-texteditor-color-text: #1f2126;
+  --dx-texteditor-color-label: #6b7078;
+  --dx-datagrid-row-alternation-bg: #fafafb;
+}
+
+body.dx-swatch-iam-dark {
+  --dx-component-color-bg: #1b1b1b;
+  --dx-color-main-bg: #121212;
+  --dx-color-text: #f5f5f5;
+  --dx-color-icon: #c4c4c4;
+  --dx-color-border: #3d3d3d;
+  --dx-color-separator: #3d3d3d;
+  --dx-texteditor-color-text: #f5f5f5;
+  --dx-texteditor-color-label: #c4c4c4;
+  --dx-datagrid-row-alternation-bg: #202020;
+}
+
+/* Product kit ------------------------------------------------------------------
+   Values mirror the PTS token contract so both products share one Fujitec accent and one editor
+   geometry. Every --app-* reads through the --dx-* layer above and keeps a literal fallback, so
+   the kit still renders if a swatch is missing entirely. Dark overrides key off the
+   .dx-swatch-iam-dark class ThemePreferenceService toggles on <body>. */
+:root {
+  /* The kit's rem sizing was authored against a 14px root - changing this renders every control
+     oversized. */
+  color-scheme: light;
+  font-size: 14px;
+
+  --app-primary: var(--dx-color-primary, #d01126);
+  --app-accent-text: var(--app-primary);
+  --app-primary-contrast: #ffffff;
+  --app-primary-hover: color-mix(in srgb, var(--app-primary) 82%, black);
+  --app-success: var(--dx-color-success, #8bc34a);
+  --app-warning: var(--dx-color-warning, #ffc107);
+  --app-danger: var(--dx-color-danger, #ea580c);
+  /* Charts need a series colour that means neither good nor bad; the status tokens above are
+     reserved for state and the brand red must never read as "normal". */
+  --app-series-neutral: #64748b;
+  --app-canvas: var(--dx-color-main-bg, #f4f4f6);
+  --app-surface: var(--dx-component-color-bg, #ffffff);
+  --app-surface-muted: var(--dx-color-main-bg, #f4f4f6);
+  --app-text: var(--dx-color-text, #1f2126);
+  --app-text-secondary: var(--dx-color-icon, #6b7078);
+  --app-border: var(--dx-color-border, #e6e6ea);
+  --app-border-strong: color-mix(
+    in srgb,
+    var(--app-border) 65%,
+    var(--app-text)
+  );
+  --app-primary-soft: color-mix(
+    in srgb,
+    var(--app-primary) 12%,
+    var(--app-surface)
+  );
+  --app-primary-border: color-mix(
+    in srgb,
+    var(--app-primary) 36%,
+    var(--app-surface)
+  );
+  --app-accent-soft: var(--app-primary-soft);
+  --app-accent-border: var(--app-primary-border);
+  --app-success-soft: color-mix(
+    in srgb,
+    var(--app-success) 12%,
+    var(--app-surface)
+  );
+  --app-success-border: color-mix(
+    in srgb,
+    var(--app-success) 36%,
+    var(--app-surface)
+  );
+  --app-warning-soft: color-mix(
+    in srgb,
+    var(--app-warning) 12%,
+    var(--app-surface)
+  );
+  --app-warning-border: color-mix(
+    in srgb,
+    var(--app-warning) 36%,
+    var(--app-surface)
+  );
+  --app-danger-soft: color-mix(
+    in srgb,
+    var(--app-danger) 12%,
+    var(--app-surface)
+  );
+  --app-danger-border: color-mix(
+    in srgb,
+    var(--app-danger) 36%,
+    var(--app-surface)
+  );
+  --app-radius-md: 0.625rem;
+  --app-radius-lg: 0.625rem;
+  --app-font-size-caption: 0.857rem;
+  --app-font-size-supporting: 0.929rem;
+  --app-font-size-body: 1rem;
+
+  /* Spacing scale. Design-system primitives lay out with gap using only these steps; a component
+     that needs an intermediate value is a signal the scale is wrong, not the component. */
+  --app-space-1: 0.25rem;
+  --app-space-2: 0.5rem;
+  --app-space-3: 0.75rem;
+  --app-space-4: 1rem;
+  --app-space-5: 1.5rem;
+  --app-space-6: 2rem;
+  --app-space-7: 3rem;
+  --app-space-8: 4rem;
+
+  /* Type ramp. Condensed carries titles and uppercase labels so headings stay narrow in a dense
+     console; mono is reserved for values compared character by character (codes, ids, counts). */
+  --app-font-display: "Barlow Condensed", "Barlow", "Segoe UI", sans-serif;
+  --app-font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --app-font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+  --app-font-size-title: 1.714rem;
+  --app-font-size-heading: 1.286rem;
+  --app-font-size-subheading: 1.071rem;
+  --app-line-height-tight: 1.15;
+  --app-line-height-body: 1.5;
+  --app-letter-spacing-label: 0.08em;
+
+  /* z-index ladder. Nothing in the product may declare a raw z-index. */
+  --app-z-sticky: 10;
+  --app-z-overlay: 20;
+  --app-z-popover: 30;
+  --app-z-drawer: 40;
+  --app-z-toast: 50;
+
+  /* Motion. Named durations let the reduced-motion rule below neutralise every animation in the
+     product from one place. */
+  --app-duration-fast: 120ms;
+  --app-duration-base: 200ms;
+  --app-duration-slow: 320ms;
+  --app-ease-standard: cubic-bezier(0.2, 0, 0.15, 1);
+  --app-ease-emphasis: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Single-line editor geometry. Every DevExtreme editor is locked to this box and all affordance
+     padding/insets are derived from these four values. */
+  --app-editor-height: 40px;
+  --app-editor-radius: 8px;
+  --app-editor-pad-inline: 12px;
+  --app-editor-affordance: 40px;
+  --app-editor-badge-inset: 9px;
+  --app-editor-inner-height: calc(var(--app-editor-height) - 2px);
+  --app-editor-line-height: 20px;
+  --app-editor-pad-block: calc(
+    (var(--app-editor-inner-height) - var(--app-editor-line-height)) / 2
+  );
+  --app-shadow-sm:
+    0 1px 2px color-mix(in srgb, var(--app-text) 5%, transparent),
+    0 1px 3px color-mix(in srgb, var(--app-text) 8%, transparent);
+  /* Focus must never read as an error. The brand accent is a red, so a hard accent ring is
+     indistinguishable from an invalid state; validation keeps the separate danger hue. */
+  --app-focus-ring: color-mix(in srgb, var(--app-text) 72%, transparent);
+  --app-shadow-md:
+    0 2px 6px color-mix(in srgb, var(--app-text) 6%, transparent),
+    0 4px 14px color-mix(in srgb, var(--app-text) 8%, transparent);
+  --app-shadow-lg: 0 10px 36px
+    color-mix(in srgb, var(--app-text) 8%, transparent);
+}
+
+/* Legacy aliases. The feature components were authored against these names before the shared kit
+   existed; pointing them at the tokens above re-themes every existing screen without touching
+   component SCSS.
+
+   These MUST be declared on <body>, not :root. A var() alias resolves against the element that
+   declares it, so aliases declared on :root would freeze against :root's light --app-* values and
+   ignore the dark overrides that .dx-swatch-iam-dark applies to <body>. Declaring them on the same
+   element that carries the swatch class makes them re-resolve per theme. */
+body {
+  --brand: var(--app-primary);
+  --brand-soft: var(--app-primary-soft);
+  --page: var(--app-canvas);
+  --panel: var(--app-surface-muted);
+  --surface: var(--app-surface);
+  --sidebar: var(--app-surface);
+  --input: var(--app-surface);
+  --text: var(--app-text);
+  --muted: var(--app-text-secondary);
+  --border: var(--app-border);
+  --border-strong: var(--app-border-strong);
+  --hover: color-mix(in srgb, var(--app-primary) 6%, var(--app-surface));
+  --focus: color-mix(in srgb, var(--app-primary) 22%, transparent);
+  --danger: var(--app-danger);
+  --danger-soft: var(--app-danger-soft);
+  --shadow: var(--app-shadow-lg);
+  --surface-subtle: var(--app-surface-muted);
+  --text-muted: var(--app-text-secondary);
+  --warning: var(--app-warning);
+}
+
+/* Dark overrides land on the same element as the aliases above so both resolve together. */
+body.dx-swatch-iam-dark {
+  color-scheme: dark;
+  --dx-color-main-bg: #121212;
+  --app-canvas: #121212;
+  --app-surface: #1b1b1b;
+  --app-surface-muted: #242424;
+  --app-text: #f5f5f5;
+  --app-text-secondary: #c4c4c4;
+  --app-border: #3d3d3d;
+  --app-accent-text: #ff5263;
+  --app-primary-soft: color-mix(
+    in srgb,
+    var(--app-primary) 14%,
+    var(--app-surface)
+  );
+  --app-primary-border: color-mix(
+    in srgb,
+    var(--app-primary) 45%,
+    var(--app-border)
+  );
+  --app-shadow-lg: 0 14px 42px rgb(0 0 0 / 40%);
+  --sidebar: #171717;
+  --input: #101010;
+  --hover: color-mix(in srgb, var(--app-primary) 18%, var(--app-surface));
+  --app-series-neutral: #94a3b8;
+}

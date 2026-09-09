@@ -1,0 +1,62 @@
+<div class="mapping-fields">
+  <label
+    ><span>Branch (optional)</span>
+    <app-lookup
+      ariaLabel="Branch"
+      emptyLabel="No branch"
+      [value]="branchId()"
+      [selectedLabel]="selectedBranchName()"
+      [searchOptions]="searchBranches"
+      [disabled]="disabled"
+      (valueChange)="chooseBranch($event)"
+    />
+  </label>
+  <label
+    ><span>State (from Branch)</span>
+    <div class="derived-value">{{ selectedStateName() || "—" }}</div>
+  </label>
+  <label
+    ><span>Region (from Branch)</span>
+    <div class="derived-value">{{ selectedRegionName() || "—" }}</div>
+  </label>
+  <label
+    ><span>Country (from Branch)</span>
+    <div class="derived-value">{{ selectedCountryName() || "—" }}</div>
+  </label>
+  <label
+    ><span>Department (optional)</span>
+    <app-lookup
+      ariaLabel="Department"
+      emptyLabel="No department"
+      [value]="departmentId()"
+      [selectedLabel]="selectedDepartmentName()"
+      [searchOptions]="searchDepartments"
+      [disabled]="disabled"
+      (valueChange)="chooseDepartment($event)"
+    />
+  </label>
+  <label
+    ><span>Team (optional)</span>
+    <app-lookup
+      ariaLabel="Team"
+      [emptyLabel]="
+        departmentId() === null ? 'Select a department first' : 'No team'
+      "
+      [value]="teamId()"
+      [selectedLabel]="selectedTeamName()"
+      [contextKey]="departmentId()"
+      [searchOptions]="searchTeams"
+      [disabled]="disabled || departmentId() === null"
+      (valueChange)="chooseTeam($event)"
+    />
+  </label>
+</div>
+<p>
+  Search for a Branch directly. Its State, Region and Country are displayed
+  automatically. Team belongs to Department. These mappings and reporting
+  relationships do not grant access.
+</p>
+<p>
+  Create branches, departments and teams under Organizations if they are not
+  listed. Location is reserved for assets.
+</p>

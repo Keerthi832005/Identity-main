@@ -1,0 +1,30 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.data-grid {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  min-width: 0;
+  padding: var(--app-space-2) var(--app-space-4) var(--app-space-4);
+}
+
+/* For a grid already sitting inside a card, which would otherwise draw a second border. */
+.data-grid--flush {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+dx-data-grid {
+  display: block;
+  min-width: 0;
+}
+
+/* Held in the DOM rather than removed, so the grid instance the toolbar drives survives a reload. */
+.is-hidden {
+  display: none;
+}

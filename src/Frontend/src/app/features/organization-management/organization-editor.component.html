@@ -1,0 +1,133 @@
+<app-page
+  eyebrow="Access"
+  [title]="title()"
+  subtitle="Manage organization details and physical address."
+>
+  <app-back-button
+    page-actions
+    text="Back to organizations"
+    [disabled]="saving()"
+    (back)="back()"
+  />
+  @if (loading()) {
+    <p role="status">Loading organization details…</p>
+  }
+  @if (loadError(); as message) {
+    <div class="error" role="alert">
+      {{ message }} <dx-button text="Retry form" (onClick)="retry()" />
+    </div>
+  }
+  @if (editor(); as mode) {
+    <form
+      autocomplete="off"
+      class="editor"
+      [attr.aria-label]="title()"
+      [attr.aria-busy]="saving()"
+      (submit)="$event.preventDefault(); save()"
+    >
+      <p class="help">
+        @if (mode.kind === "edit") {
+          Organization, type and parent stay unchanged.
+        } @else if (mode.parent) {
+          Parent: {{ mode.parent.unitName }} · {{ mode.parent.unitCode }}.
+          Organization and parent are fixed for this creation.
+        } @else {
+          Creates an organization and its root together.
+        }
+        Codes must be unique across all types in the organization.
+      </p>
+      @if (saveError(); as message) {
+        <div class="error" role="alert" tabindex="-1">{{ message }}</div>
+      }
+      @if (conflict()) {
+        <div class="conflict">
+          <p>
+            Your draft is kept. Reload the latest saved version before editing
+            again.
+          </p>
+          <dx-button
+            text="Reload latest details"
+            [disabled]="saving() || completed()"
+            (onClick)="reloadEditor()"
+          />
+        </div>
+      }
+
+      <div class="editor-fields">
+        <label
+          ><span>Code *</span
+          ><app-input
+            ariaLabel="Unit code"
+            required
+            maxlength="50"
+            [disabled]="saving() || completed()"
+            [value]="draft().unitCode"
+            (input)="editField('unitCode', $any($event.target).value)"
+        /></label>
+        <label
+          ><span>Name *</span
+          ><app-input
+            ariaLabel="Unit name"
+            required
+            maxlength="200"
+            [disabled]="saving() || completed()"
+            [value]="draft().unitName"
+            (input)="editField('unitName', $any($event.target).value)"
+        /></label>
+        <label class="wide"
+          ><span>Description</span
+          ><app-text-area
+            ariaLabel="Description"
+            maxlength="500"
+            [disabled]="saving() || completed()"
+            [value]="draft().description"
+            (input)="editField('description', $any($event.target).value)"
+        /></label>
+        @if (mode.type === "Organization" || mode.type === "Branch") {
+          @for (field of addressFields; track field.key) {
+            <label
+              ><span>{{ field.label }}</span
+              ><app-input
+                [ariaLabel]="field.label"
+                [maxlength]="field.max"
+                [disabled]="saving() || completed()"
+                [value]="draft().address[field.key]"
+                (input)="editAddress(field.key, $any($event.target).value)"
+            /></label>
+          }
+          <label
+            ><span>Latitude (−90 to 90)</span
+            ><app-input
+              ariaLabel="Latitude"
+              inputmode="decimal"
+              [disabled]="saving() || completed()"
+              [value]="draft().latitude"
+              (input)="editField('latitude', $any($event.target).value)"
+          /></label>
+          <label
+            ><span>Longitude (−180 to 180)</span
+            ><app-input
+              ariaLabel="Longitude"
+              inputmode="decimal"
+              [disabled]="saving() || completed()"
+              [value]="draft().longitude"
+              (input)="editField('longitude', $any($event.target).value)"
+          /></label>
+        }
+      </div>
+      <footer>
+        <dx-button
+          text="Cancel"
+          [disabled]="saving() || completed()"
+          (onClick)="back()"
+        /><dx-button
+          class="save-action"
+          [text]="saving() ? 'Saving…' : 'Save'"
+          type="default"
+          [useSubmitBehavior]="true"
+          [disabled]="saving() || conflict() || completed()"
+        />
+      </footer>
+    </form>
+  }
+</app-page>

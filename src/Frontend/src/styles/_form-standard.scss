@@ -1,0 +1,422 @@
+// Source-level MINI form treatment. Keep generated swatches and shell controls intact.
+@mixin controls($prefix) {
+  body :is(main, .dx-popup-content, .dx-popup-bottom, [role="dialog"]) {
+    --#{$prefix}-editor-height: 48px;
+    --#{$prefix}-editor-inner-height: 47px;
+    --#{$prefix}-editor-radius: 4px 4px 0 0;
+    --#{$prefix}-editor-pad-inline: 14px;
+    --#{$prefix}-editor-pad-block: 13.5px;
+    --mini-fill: var(--#{$prefix}-surface-muted);
+    // Drop-down rows align to the same text inset as the field they open from.
+    --mini-list-inset: 14px;
+    --mini-line: color-mix(
+      in srgb,
+      var(--#{$prefix}-text) 48%,
+      var(--#{$prefix}-surface)
+    );
+
+    // A data grid is not a form. The filled 48px box with its own border, radius and accent
+    // underline turned the filter row into a strip of loose inputs floating over the columns;
+    // inside a grid the editor keeps DevExtreme's own flat cell treatment instead.
+    .dx-texteditor:is(
+        .dx-editor-outlined,
+        .dx-editor-filled,
+        .dx-editor-underlined
+      ):not(.dx-datagrid *) {
+      background: var(--mini-fill);
+      border: 0;
+      // Override the generic swatch border notch on floating-label editors.
+      border-bottom: 1px solid var(--mini-line) !important;
+      border-radius: 4px 4px 0 0 !important;
+      box-shadow: none;
+      color: var(--#{$prefix}-text);
+
+      &.dx-state-hover:not(.dx-state-disabled):not(.dx-state-readonly) {
+        border-bottom-color: var(--#{$prefix}-text) !important;
+      }
+      &.dx-state-focused:not(.dx-state-readonly) {
+        border-bottom-color: var(--#{$prefix}-accent-text) !important;
+        box-shadow: inset 0 -1px var(--#{$prefix}-accent-text);
+      }
+      &.dx-invalid {
+        border-bottom-color: var(--#{$prefix}-danger) !important;
+        box-shadow: inset 0 -1px var(--#{$prefix}-danger);
+      }
+      &.dx-state-disabled {
+        border-bottom-style: dotted !important;
+      }
+
+      &:not(.dx-textarea) .dx-texteditor-input,
+      &:not(.dx-textarea) .dx-placeholder::before {
+        padding-block: var(--#{$prefix}-editor-pad-block);
+        padding-inline-start: var(--#{$prefix}-editor-pad-inline);
+      }
+      &:not(.dx-textarea) .dx-texteditor-input {
+        color: var(--#{$prefix}-text);
+        height: var(--#{$prefix}-editor-inner-height);
+        min-height: var(--#{$prefix}-editor-inner-height);
+      }
+      &.dx-searchbox .dx-texteditor-input,
+      &.dx-searchbox .dx-placeholder::before {
+        padding-inline-start: var(--#{$prefix}-editor-affordance);
+      }
+
+      .dx-clear-button-area .dx-icon-clear {
+        background: color-mix(
+          in srgb,
+          var(--#{$prefix}-text) 14%,
+          var(--mini-fill)
+        );
+        border-radius: 50%;
+        height: 20px;
+        width: 20px;
+        min-width: 20px;
+      }
+
+      // Generic swatch labels have a border notch. Place them within the filled
+      // field without changing the widget's accessible name or validation.
+      &:is(.dx-texteditor-with-label, .dx-texteditor-with-floating-label):not(
+          .dx-texteditor-label-outside
+        ) {
+        .dx-texteditor-input,
+        .dx-placeholder::before {
+          padding-top: 21px;
+          padding-bottom: 6px;
+        }
+        .dx-texteditor-label {
+          inset: 4px 40px auto 14px;
+          height: 15px;
+        }
+        .dx-label {
+          border: 0 !important;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+        }
+        .dx-label::before,
+        .dx-label-before,
+        .dx-label-after {
+          display: none;
+        }
+        .dx-label span {
+          color: var(--#{$prefix}-text-secondary);
+          font-size: 11px !important;
+          line-height: 15px;
+          height: 15px;
+          margin: 0 !important;
+          position: static;
+          transform: none !important;
+        }
+      }
+
+      // The swatch paints the drop-down glyph as a grey filled square on hover
+      // and while open, which fights the filled field. Keep it a plain glyph.
+      .dx-dropdowneditor-button,
+      .dx-dropdowneditor-icon {
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        color: var(--#{$prefix}-text-secondary);
+        width: var(--#{$prefix}-editor-affordance);
+        min-width: var(--#{$prefix}-editor-affordance);
+      }
+      &.dx-state-hover .dx-dropdowneditor-icon,
+      &.dx-dropdowneditor-active .dx-dropdowneditor-icon,
+      &.dx-state-focused .dx-dropdowneditor-icon {
+        color: var(--#{$prefix}-text);
+      }
+      &.dx-state-disabled .dx-dropdowneditor-icon {
+        color: color-mix(
+          in srgb,
+          var(--#{$prefix}-text-secondary) 55%,
+          transparent
+        );
+      }
+
+      // Icon-bearing select templates contain a readonly textbox; only the
+      // outer select supplies the fill and underline.
+      .dx-texteditor {
+        background: transparent;
+        border: 0;
+        border-bottom: 0 !important;
+        box-shadow: none;
+        height: 100% !important;
+        min-height: 0 !important;
+      }
+    }
+
+    .dx-checkbox:not(.dx-datagrid *) {
+      .dx-checkbox-icon {
+        border: 1px solid var(--mini-line);
+        border-radius: 3px;
+        height: 20px;
+        width: 20px;
+      }
+      &.dx-checkbox-checked .dx-checkbox-icon,
+      &.dx-checkbox-indeterminate .dx-checkbox-icon {
+        background: var(--#{$prefix}-primary);
+        border-color: var(--#{$prefix}-primary);
+        color: var(--#{$prefix}-primary-contrast);
+      }
+      &.dx-checkbox-indeterminate .dx-checkbox-icon::before {
+        background: var(--#{$prefix}-primary-contrast);
+      }
+      &.dx-state-focused .dx-checkbox-icon {
+        outline: 2px solid var(--#{$prefix}-accent-text);
+        outline-offset: 2px;
+      }
+      .dx-checkbox-text {
+        color: var(--#{$prefix}-text);
+        padding-inline-start: 8px;
+      }
+    }
+
+    // A multi-line editor keeps the filled treatment but grows with its content
+    // instead of being pinned to the 48px single-line box.
+    .dx-textarea:not(.dx-datagrid *) {
+      height: auto !important;
+      min-height: 48px !important;
+
+      .dx-texteditor-input {
+        height: auto !important;
+        min-height: 72px !important;
+        overflow-y: auto;
+        resize: none;
+      }
+    }
+
+    .dx-button:not(.dx-dropdowneditor-button):not(.dx-texteditor-button) {
+      border-radius: 4px;
+      height: 36px;
+      min-height: 36px;
+
+      .dx-button-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding-block: 0;
+      }
+      .dx-button-text {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      &.dx-button-mode-contained {
+        box-shadow: 0 2px 3px rgb(0 0 0 / 18%);
+      }
+      &.dx-button-mode-contained.dx-button-default {
+        background: var(--#{$prefix}-primary);
+        border-color: var(--#{$prefix}-primary);
+        color: var(--#{$prefix}-primary-contrast);
+
+        .dx-icon {
+          color: var(--#{$prefix}-primary-contrast);
+        }
+      }
+      &.dx-button-mode-contained.dx-button-default.dx-state-hover {
+        background: var(--#{$prefix}-primary-hover);
+      }
+      &.dx-state-focused {
+        outline: 2px solid var(--#{$prefix}-accent-text);
+        outline-offset: 2px;
+      }
+      &.dx-button-has-icon:not(.dx-button-has-text) {
+        width: 36px;
+        min-width: 36px;
+      }
+    }
+  }
+}
+
+// Editor drop-downs render into a body overlay, so they sit outside the MINI form scope above and
+// are styled here: one popup surface, one list-row language (shared with the grid) and a calendar
+// that reads as PTS rather than as the stock swatch. Selectors are deliberately compound - every
+// generated swatch rule is prefixed with .dx-swatch-* and would otherwise win on specificity.
+@mixin overlays($prefix) {
+  body .dx-popup-wrapper.dx-dropdowneditor-overlay > .dx-overlay-content {
+    background: var(--#{$prefix}-surface);
+    border: 1px solid var(--#{$prefix}-border);
+    border-radius: 6px;
+    box-shadow: 0 10px 24px
+      color-mix(in srgb, var(--#{$prefix}-text) 18%, transparent);
+    color: var(--#{$prefix}-text);
+    overflow: hidden;
+  }
+
+  // The swatch styles rows through .dx-list:not(.dx-list-select-decorator-enabled) chains that
+  // outrank any reasonable selector here, so the row language is asserted with !important.
+  body .dx-dropdownlist-popup-wrapper .dx-list {
+    background: transparent;
+    color: var(--#{$prefix}-text);
+
+    .dx-list-item {
+      border-radius: 0;
+      color: var(--#{$prefix}-text);
+
+      .dx-list-item-content {
+        // Matches the editor's own text inset so the value does not shift when the list opens.
+        padding: 10px var(--mini-list-inset, 14px) !important;
+      }
+    }
+    .dx-list-item.dx-state-hover,
+    .dx-list-item.dx-state-focused {
+      background: var(--#{$prefix}-primary-soft) !important;
+      color: var(--#{$prefix}-text) !important;
+    }
+    .dx-list-item.dx-list-item-selected {
+      background: var(--#{$prefix}-primary-soft) !important;
+      box-shadow: inset 3px 0 var(--#{$prefix}-primary) !important;
+      color: var(--#{$prefix}-text) !important;
+      font-weight: 600;
+    }
+    .dx-list-group-header {
+      background: var(--#{$prefix}-surface-muted);
+      color: var(--#{$prefix}-text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 6px var(--mini-list-inset, 14px) !important;
+      text-transform: uppercase;
+    }
+    .dx-empty-message {
+      color: var(--#{$prefix}-text-secondary);
+      padding: 14px var(--mini-list-inset, 14px);
+    }
+  }
+
+  body .dx-datebox-wrapper {
+    .dx-calendar .dx-calendar-cell {
+      border-radius: 4px;
+      color: var(--#{$prefix}-text);
+    }
+    .dx-calendar .dx-calendar-cell.dx-calendar-other-view,
+    .dx-calendar .dx-calendar-cell.dx-calendar-empty-cell {
+      color: var(--#{$prefix}-text-secondary);
+      opacity: 0.55;
+    }
+    .dx-calendar .dx-calendar-cell.dx-state-hover {
+      background: var(--#{$prefix}-primary-soft) !important;
+      box-shadow: none !important;
+      color: var(--#{$prefix}-text) !important;
+    }
+    // Today, focus and the keyboard contour each drew their own ring, so today's cell showed a
+    // box inside a box. One ring at a time: focus wins, then today.
+    .dx-calendar
+      .dx-calendar-cell.dx-calendar-today:not(.dx-state-focused):not(
+        .dx-calendar-contoured-date
+      ) {
+      box-shadow: inset 0 0 0 1px var(--#{$prefix}-primary) !important;
+      color: var(--#{$prefix}-accent-text);
+    }
+    .dx-calendar .dx-calendar-cell.dx-calendar-today {
+      color: var(--#{$prefix}-accent-text);
+      font-weight: 700;
+    }
+    .dx-calendar .dx-calendar-cell.dx-calendar-contoured-date,
+    .dx-calendar .dx-calendar-cell.dx-state-focused {
+      // Transparent outline is deliberate: Windows High Contrast drops box-shadow but paints
+      // outlines, so the ring must still exist for it to redraw.
+      box-shadow: inset 0 0 0 2px var(--#{$prefix}-focus-ring) !important;
+      outline: 2px solid transparent !important;
+      outline-offset: -2px !important;
+    }
+    .dx-calendar .dx-calendar-cell.dx-calendar-contoured-date::after,
+    .dx-calendar .dx-calendar-cell::after {
+      border: 0 !important;
+    }
+    // DevExtreme also rings the bare <span> inside the cell - a border plus a spread shadow, both
+    // in the accent. That inner ring nested inside the cell's own ring was the box-in-a-box.
+    .dx-calendar .dx-calendar-cell > span {
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+    .dx-calendar .dx-calendar-cell.dx-calendar-selected-date,
+    .dx-calendar .dx-calendar-cell.dx-calendar-selected-date.dx-calendar-today,
+    .dx-calendar .dx-calendar-cell.dx-calendar-selected-date.dx-state-hover {
+      background: var(--#{$prefix}-primary) !important;
+      box-shadow: none !important;
+      color: var(--#{$prefix}-primary-contrast) !important;
+    }
+
+    // The MINI 48px editor box is meant for form fields; the clock's hour, minute and meridiem
+    // editors are far narrower, so they keep a compact box or their digits are cut off.
+    .dx-timeview,
+    .dx-timeview-field {
+      --#{$prefix}-editor-height: 36px;
+      --#{$prefix}-editor-inner-height: 35px;
+      --#{$prefix}-editor-pad-block: 7.5px;
+      --#{$prefix}-editor-pad-inline: 6px;
+      --#{$prefix}-editor-affordance: 24px;
+    }
+    .dx-timeview-field .dx-numberbox,
+    .dx-timeview-field .dx-selectbox {
+      min-width: 68px;
+    }
+    .dx-timeview-field .dx-texteditor-input {
+      text-align: center;
+    }
+  }
+
+  // Drop-down affordances also appear on editors rendered outside a form (grid filter row,
+  // toolbars), so the plain-glyph treatment is repeated here rather than left to the form scope.
+  body .dx-dropdowneditor .dx-dropdowneditor-icon {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--#{$prefix}-text-secondary);
+  }
+  body .dx-dropdowneditor.dx-state-hover .dx-dropdowneditor-icon,
+  body .dx-dropdowneditor.dx-dropdowneditor-active .dx-dropdowneditor-icon {
+    background: transparent;
+    color: var(--#{$prefix}-text);
+  }
+}
+
+@mixin record-lists {
+  // IAM uses accessible master/detail lists, not data grids. Preserve that model
+  // while applying MINI row rules, compact padding and selected-row accent.
+  body
+    main
+    button:is(.unit-item, .user-item, .application-item)[type="button"] {
+    border: 0;
+    border-bottom: 1px solid var(--app-border);
+    border-radius: 0;
+    padding-block: 9px;
+    margin-block: 0;
+
+    &:hover,
+    &.selected,
+    &.active {
+      background: var(--app-primary-soft);
+    }
+    &.selected,
+    &.active {
+      box-shadow: inset 3px 0 var(--app-primary);
+    }
+  }
+
+  // Inside a data grid the row is already the record: the list-button treatment would draw a
+  // second underline under the text and tint the cell, which reads as a broken row.
+  body
+    main
+    .dx-datagrid-rowsview
+    button:is(.unit-item, .user-item, .application-item)[type="button"] {
+    background: transparent;
+    border-bottom: 0;
+    box-shadow: none;
+    color: inherit;
+    padding-block: 0;
+    padding-inline: 0;
+    text-align: start;
+
+    &:hover,
+    &:focus-visible {
+      background: transparent;
+      color: var(--app-accent-text);
+      text-decoration: underline;
+    }
+  }
+}

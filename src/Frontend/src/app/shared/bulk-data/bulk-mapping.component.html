@@ -1,0 +1,126 @@
+@if (paste(); as pending) {
+  <app-page
+    eyebrow="Bulk import"
+    title="Match your columns"
+    [subtitle]="
+      dataRowCount() +
+      ' rows read from the clipboard. Confirm the mapping to stage them. Nothing is written until you commit.'
+    "
+  >
+    <ng-container page-actions>
+      <dx-button
+        stylingMode="outlined"
+        text="Cancel"
+        [disabled]="staging()"
+        (onClick)="cancel()"
+      />
+      <dx-button
+        stylingMode="contained"
+        type="default"
+        [text]="'Stage ' + dataRowCount() + ' rows'"
+        [disabled]="staging() || missingRequired().length > 0"
+        (onClick)="stage()"
+      />
+    </ng-container>
+
+    @if (error()) {
+      <app-inline-alert tone="danger" heading="Staging failed">{{
+        error()
+      }}</app-inline-alert>
+    }
+
+    @if (pending.truncated) {
+      <app-inline-alert tone="warning" heading="Only the first rows were read">
+        The paste was larger than a single batch allows. Split it and paste the
+        rest afterwards.
+      </app-inline-alert>
+    }
+
+    @if (pending.hasHeaderRow) {
+      <app-inline-alert tone="info" heading="Header row detected">
+        Row 1 matched the template, so it was treated as headers rather than as
+        data.
+      </app-inline-alert>
+    } @else {
+      <app-inline-alert tone="warning" heading="No header row found">
+        Columns were matched in template order. Check each one below before
+        staging.
+      </app-inline-alert>
+    }
+
+    @if (missingRequired().length > 0) {
+      <app-inline-alert tone="danger" heading="A required column has no source">
+        Map a column to
+        {{ missingRequired()[0].header
+        }}{{
+          missingRequired().length > 1
+            ? " and " + (missingRequired().length - 1) + " more"
+            : ""
+        }}
+        before staging.
+      </app-inline-alert>
+    }
+
+    <app-section heading="Column mapping" [flush]="true">
+      <ng-container section-actions>
+        <dx-button
+          stylingMode="text"
+          text="Reset to auto"
+          [disabled]="staging()"
+          (onClick)="reset()"
+        />
+      </ng-container>
+
+      <ul class="map-list">
+        @for (mapping of mappings(); track mapping.sourceIndex) {
+          <li class="map-row">
+            <span class="map-source">
+              <strong>{{ mapping.sourceHeader }}</strong>
+              <small>{{ mapping.sample || "—" }}</small>
+            </span>
+            <i class="dx-icon dx-icon-arrowright" aria-hidden="true"></i>
+            <dx-select-box
+              class="map-target"
+              displayExpr="header"
+              valueExpr="columnId"
+              [items]="targets()"
+              [value]="mapping.columnId ?? '__ignore__'"
+              [disabled]="staging()"
+              [inputAttr]="{
+                'aria-label': 'Template column for ' + mapping.sourceHeader,
+              }"
+              (onValueChanged)="retarget(mapping.sourceIndex, $event.value)"
+            />
+            <span
+              class="map-state"
+              [class.map-state--auto]="mapping.auto"
+              [class.map-state--ignored]="!mapping.columnId"
+              >{{
+                !mapping.columnId
+                  ? "Ignored"
+                  : mapping.auto
+                    ? "Auto"
+                    : "You set"
+              }}</span
+            >
+          </li>
+        }
+      </ul>
+    </app-section>
+  </app-page>
+} @else {
+  <app-page
+    eyebrow="Bulk import"
+    title="Nothing to map"
+    subtitle="The pasted rows are no longer available. Copy the block again and paste it on the list."
+  >
+    <ng-container page-actions>
+      <dx-button
+        stylingMode="contained"
+        type="default"
+        text="Back"
+        (onClick)="cancel()"
+      />
+    </ng-container>
+  </app-page>
+}

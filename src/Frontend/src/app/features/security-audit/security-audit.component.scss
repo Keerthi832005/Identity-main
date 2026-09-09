@@ -1,0 +1,153 @@
+:host {
+  display: block;
+  color: var(--text-primary);
+}
+header,
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.filters,
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--app-radius-lg);
+  padding: 1rem;
+  box-shadow: var(--app-shadow-sm);
+  margin-top: 1rem;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+.filters label {
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+label {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+input,
+select {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: 0.3rem;
+  box-sizing: border-box;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  padding: 0.5rem;
+}
+.sessions-card {
+  min-width: 0;
+  max-width: 100%;
+}
+.sessions-card dx-data-grid {
+  display: block;
+  min-width: 0;
+}
+.session-status {
+  display: inline-block;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+}
+.session-status.active {
+  color: var(--success);
+  background: var(--success-soft);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+.chip.mono {
+  font-family: var(--app-font-mono);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  background: var(--app-surface-muted);
+  color: var(--app-text-secondary);
+}
+/* Green/amber only - brand red is reserved for errors and would misread a failed sign-in as a
+   system fault. */
+.chip.result.success {
+  color: var(--app-success);
+  background: var(--app-success-soft);
+}
+.chip.result.failure {
+  color: var(--app-warning);
+  background: var(--app-warning-soft);
+}
+.message {
+  padding: 0.7rem;
+  border-radius: 0.6rem;
+}
+.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+@media (max-width: 850px) {
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.correlation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.correlation button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  background: transparent;
+  color: var(--app-accent-text);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.correlation button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}

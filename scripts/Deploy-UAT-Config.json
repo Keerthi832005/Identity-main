@@ -1,0 +1,126 @@
+{
+  "environments": {
+    "uat": {
+      "name": "UAT",
+      "hostname": "iam-uat.fujitecindia.com",
+      "publicUrl": "https://iam-uat.fujitecindia.com",
+      "apiPort": 18100,
+      "apiBinding": "127.0.0.1:18100",
+      "internalServer": "fujitecapp2",
+      "sqlServer": "fujitecapp2\\SQLDEVELOPER2022",
+      "sqlDatabase": "FIN_IAM_UAT",
+      "sqlUser": "iam-uat-app",
+      "iis": {
+        "siteName": "IAM-UAT-Web",
+        "apiPoolName": "IAM-UAT-Api",
+        "webPoolName": "IAM-UAT-Web-Pool",
+        "enableHttps": false
+      },
+      "paths": {
+        "deployment": "C:\\IAM-UAT-Deployment",
+        "artifacts": "C:\\IAM-UAT-Artifacts",
+        "logs": "C:\\IAM-UAT-Logs"
+      },
+      "bootstrap": {
+        "employeeCode": "ADMIN-001",
+        "displayName": "UAT Administrator",
+        "clientId": "iam-uat-admin",
+        "email": "admin@fujitecindia.com"
+      },
+      "certificates": {
+        "thumbprint": "",
+        "selfSigned": true
+      },
+      "monitoring": {
+        "healthCheckInterval": 300,
+        "logRetention": 30,
+        "backupRetention": 7
+      }
+    },
+    "prod": {
+      "name": "PRODUCTION",
+      "hostname": "iam.fujitecindia.com",
+      "publicUrl": "https://iam.fujitecindia.com",
+      "apiPort": 18100,
+      "apiBinding": "127.0.0.1:18100",
+      "internalServer": "prod-server",
+      "sqlServer": "prod-sql\\INSTANCE",
+      "sqlDatabase": "FIN_IAM",
+      "sqlUser": "iam-app",
+      "iis": {
+        "siteName": "IAM-Web",
+        "apiPoolName": "IAM-Api",
+        "webPoolName": "IAM-Web-Pool",
+        "enableHttps": true
+      },
+      "paths": {
+        "deployment": "C:\\IAM-Deployment",
+        "artifacts": "C:\\IAM-Artifacts",
+        "logs": "C:\\IAM-Logs"
+      },
+      "bootstrap": {
+        "employeeCode": "ADMIN-001",
+        "displayName": "Production Administrator",
+        "clientId": "iam-admin",
+        "email": "admin@fujitecindia.com"
+      },
+      "certificates": {
+        "thumbprint": "TO_BE_PROVIDED",
+        "selfSigned": false
+      },
+      "monitoring": {
+        "healthCheckInterval": 60,
+        "logRetention": 90,
+        "backupRetention": 30
+      }
+    }
+  },
+  "database": {
+    "migrations": {
+      "autoApply": true,
+      "backupBefore": true,
+      "verifySchema": true
+    },
+    "backup": {
+      "enabled": true,
+      "schedule": "daily",
+      "time": "02:00",
+      "retention": 7
+    }
+  },
+  "security": {
+    "jwt": {
+      "algorithm": "RS256",
+      "keySize": 2048,
+      "expirationMinutes": 60
+    },
+    "encryption": {
+      "algorithm": "AES256",
+      "keyLength": 32
+    },
+    "rateLimit": {
+      "authRequestsPerMinute": 10,
+      "enablePerIp": true
+    }
+  },
+  "deployment": {
+    "validation": {
+      "checkPrerequisites": true,
+      "testConnections": true,
+      "verifyArtifacts": true
+    },
+    "rollback": {
+      "enabled": true,
+      "keepPreviousVersions": 2,
+      "autoRollbackOnFailure": false
+    },
+    "notifications": {
+      "enabled": true,
+      "onSuccess": true,
+      "onFailure": true,
+      "recipients": [
+        "iam-admins@fujitecindia.com"
+      ]
+    }
+  }
+}

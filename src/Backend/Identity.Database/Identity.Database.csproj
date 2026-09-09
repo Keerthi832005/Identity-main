@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Identity.Database</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="DbUp-SqlServer" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\db\migrations\*.sql" Link="Migrations\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

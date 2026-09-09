@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Identity.Contracts</RootNamespace>
+  </PropertyGroup>
+</Project>

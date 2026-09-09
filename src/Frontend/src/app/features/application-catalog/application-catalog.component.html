@@ -1,0 +1,578 @@
+<!-- catalog-layout is the hook the browser tests use to assert the list hides behind a form. -->
+<div
+  class="catalog-layout"
+  [hidden]="formMode() !== null"
+  appBulkPaste="modules"
+  [pasteColumns]="moduleColumns"
+>
+  <app-page
+    eyebrow="Access"
+    title="Application catalog"
+    subtitle="Security clients, the module hierarchy and capability definitions."
+  >
+    <ng-container page-actions>
+      @if (directory.id()) {
+        <app-back-button
+          text="Back to applications"
+          (back)="directory.back()"
+        />
+      }
+      <app-bulk-actions
+        page-actions
+        entityKey="modules"
+        entityLabel="modules"
+        [columns]="moduleColumns"
+        [exportRowsProvider]="exportModules"
+        (failed)="error.set($event)"
+      />
+      <dx-button
+        page-actions
+        text="New application"
+        icon="plus"
+        type="default"
+        stylingMode="contained"
+        (onClick)="openForm('application')"
+      />
+    </ng-container>
+
+    @if (notice(); as message) {
+      <app-inline-alert tone="success">
+        {{ message }}
+        <dx-button
+          alert-actions
+          stylingMode="text"
+          icon="close"
+          hint="Dismiss"
+          (onClick)="notice.set(null)"
+        />
+      </app-inline-alert>
+    }
+    @if (error(); as message) {
+      <app-inline-alert tone="danger" heading="That did not work">
+        {{ message }}
+        <dx-button
+          alert-actions
+          stylingMode="text"
+          icon="close"
+          hint="Dismiss"
+          (onClick)="error.set(null)"
+        />
+      </app-inline-alert>
+    }
+
+    @if (!directory.id()) {
+      <app-directory-grid
+        label="Applications"
+        basePath="/applications"
+        idField="applicationId"
+        [rows]="applications()"
+        [columns]="directoryColumns"
+        [total]="directory.total()"
+        [skip]="directory.skip()"
+        [queryParams]="directory.params()"
+        [busy]="loading()"
+        [search]="search()"
+        (searchInput)="search.set($event)"
+        (searchChange)="searchDirectory()"
+        (pageChange)="pageDirectory($event)"
+      />
+    } @else {
+      @if (loading()) {
+        <app-skeleton shape="row" [lines]="4" />
+      }
+
+      <div class="catalog-detail">
+        @if (catalog(); as data) {
+          <article class="application-hero">
+            <div class="application-hero__mark">
+              {{ data.application.applicationCode.slice(0, 2).toUpperCase() }}
+            </div>
+            <div>
+              <p>{{ data.application.applicationCode }}</p>
+              <h2>{{ data.application.applicationName }}</h2>
+              <span>{{ data.application.tokenAudience }}</span>
+            </div>
+            <div class="application-hero__actions">
+              <dx-button
+                text="Add client"
+                icon="plus"
+                stylingMode="outlined"
+                (onClick)="openForm('client')"
+              /><dx-button
+                text="Add module"
+                icon="plus"
+                stylingMode="outlined"
+                (onClick)="openForm('module')"
+              /><dx-button
+                text="Add capability"
+                icon="plus"
+                stylingMode="outlined"
+                [disabled]="!data.modules.length"
+                (onClick)="openForm('capability')"
+              />
+              <span
+                class="status"
+                [class.inactive]="!data.application.isActive"
+                >{{ data.application.isActive ? "Active" : "Inactive" }}</span
+              >
+              @if (data.application.isActive) {
+                <dx-button
+                  text="Revoke"
+                  icon="trash"
+                  stylingMode="outlined"
+                  (onClick)="
+                    revoke(
+                      'Application',
+                      data.application.applicationId,
+                      data.application.applicationName
+                    )
+                  "
+                />
+              }
+            </div>
+          </article>
+
+          <section class="resource-section" aria-label="OAuth clients">
+            <app-data-grid
+              flush
+              heading="OAuth clients"
+              [count]="data.clients.length"
+              ariaLabel="OAuth clients"
+              [rows]="data.clients"
+              [columns]="clientColumns"
+              keyExpr="applicationClientId"
+              [filterable]="false"
+              [pageSize]="0"
+              [chooser]="false"
+              emptyText="No clients configured."
+            >
+              <span *appGridCell="'clientIdCell'; let cell" class="mono-chip">{{
+                cell.data.clientId
+              }}</span>
+              <div *appGridCell="'clientActionsCell'; let cell">
+                @if (cell.data.isActive) {
+                  <button
+                    class="text-action danger"
+                    type="button"
+                    (click)="
+                      revoke(
+                        'ApplicationClient',
+                        cell.data.applicationClientId,
+                        cell.data.clientName
+                      )
+                    "
+                  >
+                    Revoke client
+                  </button>
+                }
+              </div>
+            </app-data-grid>
+          </section>
+
+          <section class="resource-section" aria-label="Roles">
+            <app-data-grid
+              flush
+              heading="Roles"
+              [count]="access()?.roles?.length ?? 0"
+              ariaLabel="Roles"
+              [rows]="access()?.roles ?? []"
+              [columns]="roleColumns"
+              keyExpr="roleId"
+              [chooser]="false"
+              [pageSize]="0"
+              emptyText="No roles configured."
+            >
+              <div *appGridCell="'roleNameCell'; let cell" class="role-cell">
+                <strong>{{ cell.data.roleName }}</strong>
+                <span class="mono-chip">{{ cell.data.roleCode }}</span>
+              </div>
+              <span
+                *appGridCell="'roleStatusCell'; let cell"
+                class="state"
+                [class.inactive]="!cell.data.isActive"
+                >{{ cell.data.isActive ? "Active" : "Inactive" }}</span
+              >
+            </app-data-grid>
+          </section>
+
+          <section class="resource-section" aria-label="Users">
+            <app-data-grid
+              flush
+              heading="Users"
+              [count]="usersTotal()"
+              ariaLabel="Users"
+              [rows]="users()"
+              [columns]="userColumns"
+              keyExpr="userId"
+              [chooser]="false"
+              [pageSize]="0"
+              [loading]="usersLoading()"
+              searchMode="server"
+              [searchTerm]="usersSearch()"
+              searchPlaceholder="Search users"
+              (searchTermChange)="searchUsers($event)"
+              emptyText="No users assigned to this application."
+            >
+              <div *appGridCell="'userNameCell'; let cell">
+                <a [routerLink]="['/users', cell.data.userId]">{{
+                  cell.data.displayName
+                }}</a>
+              </div>
+              <div
+                *appGridCell="'userRolesCell'; let cell"
+                class="capability-list"
+              >
+                @for (role of cell.data.roles; track role) {
+                  <span>{{ role }}</span>
+                } @empty {
+                  <span class="inactive">None</span>
+                }
+              </div>
+              <span
+                *appGridCell="'userStatusCell'; let cell"
+                class="state"
+                [class.inactive]="!cell.data.isActive"
+                >{{ cell.data.isActive ? "Active" : "Inactive" }}</span
+              >
+              <footer grid-footer>
+                <span
+                  >{{ usersTotal() ? usersSkip() + 1 : 0 }}–{{ usersLast() }} of
+                  {{ usersTotal() }}</span
+                >
+                @if (usersTotal() > 20) {
+                  <dx-button
+                    text="Previous"
+                    [disabled]="usersLoading() || usersSkip() === 0"
+                    (onClick)="pageUsers(usersSkip() - 20)"
+                  />
+                  <dx-button
+                    text="Next"
+                    [disabled]="usersLoading() || usersLast() >= usersTotal()"
+                    (onClick)="pageUsers(usersSkip() + 20)"
+                  />
+                }
+              </footer>
+            </app-data-grid>
+          </section>
+
+          <section
+            class="resource-section"
+            aria-label="Modules and capabilities"
+          >
+            <app-data-grid
+              flush
+              heading="Modules & capabilities"
+              [count]="data.modules.length"
+              ariaLabel="Modules and capabilities"
+              [rows]="moduleTree()"
+              [columns]="moduleGridColumns"
+              keyExpr="module.applicationModuleId"
+              [chooser]="false"
+              [pageSize]="0"
+              emptyText="No modules configured."
+            >
+              <div
+                *appGridCell="'moduleNameCell'; let cell"
+                class="module-cell"
+                [style.padding-left.px]="cell.data.depth * 22"
+              >
+                <span class="resource-icon"
+                  ><i class="dx-icon dx-icon-folder"></i
+                ></span>
+                <div>
+                  <h4>
+                    {{ cell.data.module.moduleName }}
+                    @if (cell.data.module.isSystem) {
+                      <small title="A system module keeps its place"
+                        >System</small
+                      >
+                    }
+                  </h4>
+                  <code>{{ cell.data.module.moduleCode }}</code>
+                  <p>
+                    {{
+                      cell.data.module.description || "No description provided."
+                    }}
+                  </p>
+                </div>
+              </div>
+              <div
+                *appGridCell="'moduleCapabilitiesCell'; let cell"
+                class="capability-list"
+              >
+                @for (
+                  capability of capabilitiesOf(
+                    cell.data.module.applicationModuleId
+                  );
+                  track capability.moduleCapabilityId
+                ) {
+                  <span [class.inactive]="!capability.isActive"
+                    >{{ capability.capabilityCode }}
+                    @if (capability.isActive) {
+                      <button
+                        type="button"
+                        aria-label="Revoke capability"
+                        (click)="
+                          revoke(
+                            'Capability',
+                            capability.moduleCapabilityId,
+                            capability.capabilityName
+                          )
+                        "
+                      >
+                        ×
+                      </button>
+                    }
+                  </span>
+                } @empty {
+                  <span class="inactive">No capabilities</span>
+                }
+              </div>
+              <span
+                *appGridCell="'moduleOrderCell'; let cell"
+                class="move-actions"
+              >
+                <button
+                  class="icon-action"
+                  type="button"
+                  [disabled]="!cell.data.canMoveUp || saving()"
+                  [attr.aria-label]="
+                    'Move ' + cell.data.module.moduleName + ' up'
+                  "
+                  (click)="moveModule(cell.data.module, 'up')"
+                >
+                  <i class="dx-icon dx-icon-chevronup"></i>
+                </button>
+                <button
+                  class="icon-action"
+                  type="button"
+                  [disabled]="!cell.data.canMoveDown || saving()"
+                  [attr.aria-label]="
+                    'Move ' + cell.data.module.moduleName + ' down'
+                  "
+                  (click)="moveModule(cell.data.module, 'down')"
+                >
+                  <i class="dx-icon dx-icon-chevrondown"></i>
+                </button>
+              </span>
+              <div
+                *appGridCell="'moduleStatusCell'; let cell"
+                class="module-status-cell"
+              >
+                <span
+                  class="state"
+                  [class.inactive]="!cell.data.module.isActive"
+                  >{{ cell.data.module.isActive ? "Active" : "Disabled" }}</span
+                >
+                @if (cell.data.module.isActive && !cell.data.module.isSystem) {
+                  <button
+                    class="icon-action"
+                    type="button"
+                    [attr.aria-label]="'Disable ' + cell.data.module.moduleName"
+                    (click)="
+                      revoke(
+                        'Module',
+                        cell.data.module.applicationModuleId,
+                        cell.data.module.moduleName
+                      )
+                    "
+                  >
+                    <i class="dx-icon dx-icon-trash"></i>
+                  </button>
+                }
+              </div>
+            </app-data-grid>
+          </section>
+        } @else if (!loading()) {
+          <app-empty-state
+            icon="box"
+            title="Application unavailable"
+            message="Choose an application to review its clients, modules and capabilities."
+          />
+        }
+      </div>
+    }
+  </app-page>
+</div>
+@if (formMode(); as mode) {
+  <app-page-header
+    [title]="'New ' + title(mode).toLowerCase()"
+    eyebrow="IAM · Applications"
+    icon="box"
+    description="Review the details before saving."
+  >
+    <dx-button
+      page-actions
+      text="Back to applications"
+      icon="arrowleft"
+      [disabled]="saving()"
+      (onClick)="closeForm()"
+    />
+  </app-page-header>
+  <form
+    autocomplete="off"
+    class="inline-editor"
+    [attr.aria-label]="'New ' + title(mode).toLowerCase()"
+    [attr.aria-busy]="saving()"
+    (submit)="$event.preventDefault(); submit()"
+  >
+    @if (mode !== "application") {
+      <p>
+        Application:
+        <strong>{{ catalog()?.application?.applicationName }}</strong> ·
+        {{ catalog()?.application?.applicationCode }}
+      </p>
+    }
+    @if (error(); as message) {
+      <div class="error" role="alert">{{ message }}</div>
+    }
+
+    <label
+      ><span>{{
+        mode === "client"
+          ? "Client ID"
+          : mode === "capability"
+            ? "Capability code"
+            : mode === "module"
+              ? "Module code"
+              : "Application code"
+      }}</span
+      ><app-input
+        [disabled]="saving()"
+        required
+        maxlength="150"
+        [placeholder]="mode === 'capability' ? 'module.action' : ''"
+        [value]="code()"
+        (input)="code.set($any($event.target).value)"
+    /></label>
+    <label
+      ><span>Name</span
+      ><app-input
+        [disabled]="saving()"
+        required
+        maxlength="200"
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+    /></label>
+    @if (mode === "application") {
+      <label
+        ><span>Token audience</span
+        ><app-input
+          [disabled]="saving()"
+          required
+          maxlength="500"
+          placeholder="urn:application:audience"
+          [value]="tokenAudience()"
+          (input)="tokenAudience.set($any($event.target).value)"
+      /></label>
+    }
+    @if (mode === "client") {
+      <label
+        ><span>Client type</span
+        ><app-select
+          [disabled]="saving()"
+          [value]="clientType()"
+          (change)="clientType.set($any($event.target).value)"
+        >
+          <app-option value="Public">Public</app-option>
+          <app-option value="Confidential">Confidential</app-option>
+          <app-option value="Service">Service</app-option>
+        </app-select></label
+      >
+      @if (clientType() !== "Public") {
+        <label
+          ><span>Client secret</span
+          ><app-input
+            [disabled]="saving()"
+            type="secret"
+            required
+            [value]="clientSecret()"
+            (input)="clientSecret.set($any($event.target).value)"
+          /><small
+            >Write-only. It is cleared immediately and never returned by
+            IAM.</small
+          ></label
+        >
+      }
+    }
+    @if (mode === "module") {
+      <label
+        ><span>Parent module</span
+        ><app-select
+          [disabled]="saving()"
+          [value]="parentModuleId() ?? ''"
+          (change)="
+            parentModuleId.set(
+              $any($event.target).value ? +$any($event.target).value : null
+            )
+          "
+        >
+          <app-option [value]="''">None</app-option>
+          @for (
+            module of catalog()?.modules ?? [];
+            track module.applicationModuleId
+          ) {
+            <app-option [value]="module.applicationModuleId">{{
+              module.moduleName
+            }}</app-option>
+          }
+        </app-select></label
+      >
+      <label
+        ><span>Display order</span
+        ><app-input
+          [disabled]="saving()"
+          type="number"
+          min="0"
+          max="10000"
+          [value]="displayOrder()"
+          (input)="displayOrder.set(+$any($event.target).value)"
+      /></label>
+    }
+    @if (mode === "capability") {
+      <label
+        ><span>Module</span
+        ><app-select
+          [disabled]="saving()"
+          required
+          [value]="targetModuleId() ?? ''"
+          (change)="targetModuleId.set(+$any($event.target).value)"
+        >
+          @for (
+            module of catalog()?.modules ?? [];
+            track module.applicationModuleId
+          ) {
+            <app-option [value]="module.applicationModuleId">{{
+              module.moduleName
+            }}</app-option>
+          }
+        </app-select></label
+      >
+    }
+    @if (mode !== "client") {
+      <label
+        ><span>Description</span
+        ><app-text-area
+          [disabled]="saving()"
+          maxlength="1000"
+          [value]="description()"
+          (input)="description.set($any($event.target).value)"
+        />
+      </label>
+    }
+    <footer>
+      <dx-button
+        text="Cancel"
+        [disabled]="saving()"
+        stylingMode="outlined"
+        (onClick)="closeForm()"
+      /><dx-button
+        [text]="saving() ? 'Saving…' : 'Create'"
+        type="default"
+        stylingMode="contained"
+        [disabled]="saving()"
+        [useSubmitBehavior]="true"
+      />
+    </footer>
+  </form>
+}

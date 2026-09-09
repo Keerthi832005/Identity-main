@@ -1,0 +1,966 @@
+<!-- access-layout is the hook the browser tests use to assert the list hides behind a form. -->
+<div class="access-layout" [hidden]="actionMode() !== null">
+  <app-page
+    eyebrow="Access"
+    title="Users &amp; access"
+    subtitle="Explain and control application grants, roles and user overrides."
+  >
+    <ng-container page-actions>
+      @if (directory.id()) {
+        <app-back-button text="Back to users" (back)="directory.back()" />
+      }
+      <app-bulk-actions
+        page-actions
+        entityKey="users"
+        entityLabel="users"
+        [columns]="bulkColumns"
+        [exportRowsProvider]="exportRows"
+        (failed)="error.set($event)"
+      />
+      <dx-button
+        text="New user"
+        icon="plus"
+        type="default"
+        stylingMode="contained"
+        (onClick)="open('user')"
+      />
+    </ng-container>
+    @if (notice(); as message) {
+      <app-inline-alert tone="success">
+        {{ message }}
+        <dx-button
+          alert-actions
+          stylingMode="text"
+          icon="close"
+          hint="Dismiss"
+          (onClick)="notice.set(null)"
+        />
+      </app-inline-alert>
+    }
+    @if (error(); as message) {
+      <app-inline-alert tone="danger" heading="That did not work">
+        {{ message }}
+        <dx-button
+          alert-actions
+          stylingMode="text"
+          icon="close"
+          hint="Dismiss"
+          (onClick)="error.set(null)"
+        />
+      </app-inline-alert>
+    }
+    @if (!directory.id()) {
+      <app-directory-grid
+        appBulkPaste="users"
+        [pasteColumns]="bulkColumns"
+        label="Users"
+        basePath="/users"
+        idField="userId"
+        [rows]="users()"
+        [columns]="directoryColumns"
+        [total]="directory.total()"
+        [skip]="directory.skip()"
+        [queryParams]="directory.params()"
+        [busy]="loading()"
+        [search]="search()"
+        (searchInput)="search.set($event)"
+        (searchChange)="searchDirectory()"
+        (pageChange)="pageDirectory($event)"
+      />
+    } @else {
+      @if (loading()) {
+        <app-skeleton shape="row" [lines]="4" />
+      }
+      <div class="access-detail">
+        @if (userAccess(); as detail) {
+          <article class="user-hero">
+            <span class="avatar">{{
+              detail.user.displayName.slice(0, 2).toUpperCase()
+            }}</span>
+            <div class="user-hero__identity">
+              <h2>
+                {{ detail.user.displayName }}
+                <span class="code-chip">{{ detail.user.employeeCode }}</span>
+                <span class="state" [class.inactive]="!detail.user.isActive">{{
+                  detail.user.isActive ? "Active" : "Inactive"
+                }}</span>
+              </h2>
+              <p class="user-hero__meta">
+                <span class="email">{{
+                  detail.user.email || "No email on file"
+                }}</span>
+                <span>{{ detail.user.departmentName || "No department" }}</span>
+                <span>{{ detail.user.teamName || "No team" }}</span>
+                <span
+                  >Manager:
+                  {{ detail.user.managerDisplayName || "Not assigned" }}</span
+                >
+                <span>Security version {{ detail.user.securityVersion }}</span>
+              </p>
+            </div>
+            <div class="user-hero__actions">
+              <dx-button
+                text="Reset password"
+                stylingMode="outlined"
+                (onClick)="chooseTab('security', detail.user.userId)"
+              />
+              <dx-button
+                text="Set terminal PIN"
+                stylingMode="outlined"
+                (onClick)="chooseTab('security', detail.user.userId)"
+              />
+              @if (detail.user.isActive) {
+                <dx-button
+                  text="Revoke user"
+                  type="danger"
+                  stylingMode="outlined"
+                  (onClick)="
+                    revoke('User', detail.user.userId, detail.user.displayName)
+                  "
+                />
+              }
+            </div>
+          </article>
+          <div
+            class="detail-tabs"
+            role="tablist"
+            aria-label="User detail sections"
+          >
+            @for (tab of detailTabs; track tab.id) {
+              <button
+                type="button"
+                role="tab"
+                [attr.aria-selected]="detailTab() === tab.id"
+                [class.active]="detailTab() === tab.id"
+                (click)="chooseTab(tab.id, detail.user.userId)"
+              >
+                {{ tab.label }}
+              </button>
+            }
+          </div>
+
+          @if (detailTab() === "security") {
+            @if (securityLoading()) {
+              <app-skeleton shape="row" [lines]="4" />
+            } @else if (security(); as posture) {
+              @if (credentialNotice(); as message) {
+                <app-inline-alert tone="success">{{
+                  message
+                }}</app-inline-alert>
+              }
+              @if (credentialError(); as message) {
+                <app-inline-alert tone="danger" heading="That did not work">{{
+                  message
+                }}</app-inline-alert>
+              }
+
+              <div class="posture">
+                <section class="card">
+                  <header>
+                    <h3>Devices</h3>
+                    <small>{{ posture.devices.length }}</small>
+                  </header>
+                  @for (device of posture.devices; track device.deviceId) {
+                    <article class="posture__row">
+                      <div>
+                        <strong>{{ device.deviceName }}</strong>
+                        <small
+                          >{{ device.deviceType }} · first seen
+                          {{ device.firstSeenAt | date: "dd MMM yyyy" }}</small
+                        >
+                      </div>
+                      <div class="posture__actions">
+                        <span
+                          class="chip"
+                          [class.chip--ok]="device.isTrusted"
+                          [class.chip--muted]="!device.isTrusted"
+                          >{{
+                            device.isTrusted ? "Trusted" : "Untrusted"
+                          }}</span
+                        >
+                        @if (device.isActive && !device.isTrusted) {
+                          <dx-button
+                            text="Trust"
+                            stylingMode="outlined"
+                            [disabled]="credentialSaving()"
+                            (onClick)="trustDevice(device.deviceId)"
+                          />
+                        }
+                        @if (device.isActive) {
+                          <dx-button
+                            text="Revoke"
+                            type="danger"
+                            stylingMode="outlined"
+                            [disabled]="credentialSaving()"
+                            (onClick)="revokeDevice(device.deviceId)"
+                          />
+                        }
+                      </div>
+                    </article>
+                  } @empty {
+                    <p class="posture__empty">No devices registered.</p>
+                  }
+                </section>
+
+                <section class="card">
+                  <header>
+                    <h3>MFA methods</h3>
+                    <small>{{ posture.mfaMethods.length }}</small>
+                  </header>
+                  @for (
+                    method of posture.mfaMethods;
+                    track method.userMfaMethodId
+                  ) {
+                    <article class="posture__row">
+                      <div>
+                        <strong
+                          >{{ method.methodType }} ·
+                          {{ method.methodName }}</strong
+                        >
+                        <small
+                          >Added
+                          {{ method.createdAt | date: "dd MMM yyyy" }}</small
+                        >
+                      </div>
+                      <div class="posture__actions">
+                        <span
+                          class="chip"
+                          [class.chip--ok]="
+                            method.isEnabled && method.isVerified
+                          "
+                          [class.chip--muted]="!method.isEnabled"
+                          >{{
+                            !method.isEnabled
+                              ? "Revoked"
+                              : method.isVerified
+                                ? "Active"
+                                : "Pending"
+                          }}</span
+                        >
+                        @if (method.isEnabled) {
+                          <dx-button
+                            text="Revoke"
+                            type="danger"
+                            stylingMode="outlined"
+                            [disabled]="credentialSaving()"
+                            (onClick)="revokeMfa(method.userMfaMethodId)"
+                          />
+                        }
+                      </div>
+                    </article>
+                  } @empty {
+                    <p class="posture__empty">No MFA methods enrolled.</p>
+                  }
+                </section>
+
+                <section class="card">
+                  <header>
+                    <h3>Credentials</h3>
+                    <small>{{ posture.credentials.length }}</small>
+                  </header>
+                  @for (
+                    credential of posture.credentials;
+                    track credential.userCredentialId
+                  ) {
+                    <article class="posture__row">
+                      <div>
+                        <strong>{{ credential.credentialType }}</strong>
+                        <small
+                          >Set
+                          {{
+                            credential.createdAt | date: "dd MMM yyyy"
+                          }}</small
+                        >
+                      </div>
+                      <span
+                        class="chip"
+                        [class.chip--ok]="!credential.revokedAt"
+                        [class.chip--muted]="credential.revokedAt"
+                        >{{ credential.revokedAt ? "Revoked" : "Active" }}</span
+                      >
+                    </article>
+                  } @empty {
+                    <p class="posture__empty">No credentials issued.</p>
+                  }
+                </section>
+              </div>
+
+              <section class="card credentials">
+                <header>
+                  <h3>Replace credentials</h3>
+                  <p>
+                    Replacing either credential raises the security version and
+                    ends every open session for this user.
+                  </p>
+                </header>
+                <div class="credentials__forms">
+                  <form
+                    autocomplete="off"
+                    class="credential-form"
+                    (submit)="
+                      $event.preventDefault(); setPassword(detail.user.userId)
+                    "
+                  >
+                    <h4>Replace password</h4>
+                    <span class="field-label">New password</span>
+                    <app-input
+                      type="secret"
+                      ariaLabel="New password"
+                      [value]="password()"
+                      (input)="password.set($any($event.target).value)"
+                    />
+                    <span class="field-label">Expiry (optional)</span>
+                    <app-input
+                      type="datetime-local"
+                      ariaLabel="Password expiry"
+                      [value]="passwordExpiry()"
+                      (input)="passwordExpiry.set($any($event.target).value)"
+                    />
+                    <dx-button
+                      text="Set password"
+                      type="default"
+                      [disabled]="credentialSaving()"
+                      [useSubmitBehavior]="true"
+                    />
+                  </form>
+                  <form
+                    autocomplete="off"
+                    class="credential-form"
+                    (submit)="
+                      $event.preventDefault(); setPin(detail.user.userId)
+                    "
+                  >
+                    <h4>Replace terminal PIN</h4>
+                    <span class="field-label">Four-digit PIN</span>
+                    <app-input
+                      type="secret"
+                      ariaLabel="Four-digit PIN"
+                      inputmode="numeric"
+                      maxlength="4"
+                      [value]="pin()"
+                      (input)="pin.set($any($event.target).value)"
+                    />
+                    <dx-button
+                      text="Set PIN"
+                      type="default"
+                      [disabled]="credentialSaving()"
+                      [useSubmitBehavior]="true"
+                    />
+                  </form>
+                </div>
+              </section>
+
+              <section class="card credentials">
+                <header>
+                  <h3>Register a device</h3>
+                  <p>
+                    Fingerprints are transmitted once and stored only as hashes.
+                  </p>
+                </header>
+                <form
+                  autocomplete="off"
+                  class="device-form"
+                  (submit)="
+                    $event.preventDefault(); registerDevice(detail.user.userId)
+                  "
+                >
+                  <span class="field-label">Name</span>
+                  <span class="field-label">Type</span>
+                  <span class="field-label">Fingerprint</span>
+                  <app-input
+                    ariaLabel="Device name"
+                    [value]="deviceName()"
+                    (input)="deviceName.set($any($event.target).value)"
+                  />
+                  <app-select
+                    ariaLabel="Device type"
+                    [value]="deviceType()"
+                    (change)="deviceType.set($any($event.target).value)"
+                  >
+                    <app-option value="Browser">Browser</app-option>
+                    <app-option value="Mobile">Mobile</app-option>
+                    <app-option value="Terminal">Terminal</app-option>
+                  </app-select>
+                  <app-input
+                    type="secret"
+                    ariaLabel="Device fingerprint"
+                    [value]="deviceFingerprint()"
+                    (input)="deviceFingerprint.set($any($event.target).value)"
+                  />
+                  <dx-button
+                    text="Register"
+                    type="default"
+                    [disabled]="credentialSaving()"
+                    [useSubmitBehavior]="true"
+                  />
+                </form>
+              </section>
+
+              <section class="card credentials">
+                <header>
+                  <h3>Authenticator MFA</h3>
+                  <p>
+                    The enrolment secret is shown once and is never retrievable
+                    afterwards.
+                  </p>
+                </header>
+                <form
+                  autocomplete="off"
+                  class="mfa-form"
+                  (submit)="
+                    $event.preventDefault(); enrollTotp(detail.user.userId)
+                  "
+                >
+                  <span class="field-label">Method name</span>
+                  <app-input
+                    ariaLabel="Method name"
+                    [value]="methodName()"
+                    (input)="methodName.set($any($event.target).value)"
+                  />
+                  <dx-button
+                    text="Start enrolment"
+                    type="default"
+                    [disabled]="credentialSaving()"
+                    [useSubmitBehavior]="true"
+                  />
+                </form>
+                @if (enrollment(); as setup) {
+                  <div class="enrollment" role="alert">
+                    <h4>Enrolment secret — shown for two minutes</h4>
+                    <code>{{ setup.secret }}</code>
+                    <p>
+                      {{ setup.algorithm }} · {{ setup.digits }} digits · every
+                      {{ setup.periodSeconds }} seconds
+                    </p>
+                    <span class="field-label">Current code</span>
+                    <app-input
+                      ariaLabel="Current code"
+                      inputmode="numeric"
+                      maxlength="6"
+                      [value]="verificationCode()"
+                      (input)="verificationCode.set($any($event.target).value)"
+                    />
+                    <div class="enrollment__actions">
+                      <dx-button
+                        text="Verify"
+                        type="success"
+                        [disabled]="credentialSaving()"
+                        (onClick)="verifyTotp(detail.user.userId)"
+                      />
+                      <dx-button
+                        text="Cancel and clear"
+                        stylingMode="outlined"
+                        (onClick)="clearSecrets()"
+                      />
+                    </div>
+                  </div>
+                }
+              </section>
+            }
+          }
+
+          @if (detailTab() === "profile") {
+            <div class="profile-actions">
+              <dx-button
+                text="Edit profile"
+                icon="edit"
+                stylingMode="outlined"
+                (onClick)="open('profile')"
+              />
+            </div>
+            <!-- The same record the editor writes, so what is about to change is on screen before
+                 anyone opens the form. -->
+            <dl class="profile-facts">
+              <div>
+                <dt>Display name</dt>
+                <dd>{{ detail.user.displayName }}</dd>
+              </div>
+              <div>
+                <dt>Employee code</dt>
+                <dd>{{ detail.user.employeeCode }}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{{ detail.user.email || "Not provided" }}</dd>
+              </div>
+              <div>
+                <dt>Manager</dt>
+                <dd>{{ detail.user.managerDisplayName || "Not assigned" }}</dd>
+              </div>
+              <div>
+                <dt>Department</dt>
+                <dd>{{ detail.user.departmentName || "Not assigned" }}</dd>
+              </div>
+              <div>
+                <dt>Team</dt>
+                <dd>{{ detail.user.teamName || "Not assigned" }}</dd>
+              </div>
+              <div>
+                <dt>Branch</dt>
+                <dd>{{ detail.user.branchName || "Not assigned" }}</dd>
+              </div>
+              <div>
+                <dt>State / Region / Country</dt>
+                <dd>
+                  {{ detail.user.stateName || "—" }} /
+                  {{ detail.user.regionName || "—" }} /
+                  {{ detail.user.countryName || "—" }}
+                </dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{{ detail.user.isActive ? "Active" : "Inactive" }}</dd>
+              </div>
+              <div>
+                <dt>Security version</dt>
+                <dd>{{ detail.user.securityVersion }}</dd>
+              </div>
+              <div>
+                <dt>Last sign-in</dt>
+                <dd>
+                  {{
+                    detail.user.lastLoginAt
+                      ? (detail.user.lastLoginAt | date: "dd MMM yyyy, HH:mm")
+                      : "Never"
+                  }}
+                </dd>
+              </div>
+              <div>
+                <dt>Created</dt>
+                <dd>{{ detail.user.createdAt | date: "dd MMM yyyy" }}</dd>
+              </div>
+            </dl>
+          }
+
+          <!-- Access and Roles are read through an application; Security is not scoped to one. -->
+          @if (detailTab() === "access" || detailTab() === "roles") {
+            <section class="application-context">
+              <!-- Chips, not a drop-down: switching application is the main thing done on this
+                   tab, and there are only ever a handful to choose from. -->
+              <app-chip-select
+                label="Application"
+                [options]="applicationChips()"
+                [value]="selectedApplicationId()?.toString() ?? ''"
+                (valueChange)="chooseApplication($event)"
+              />
+              <div class="context-actions">
+                @if (!selectedAccess()) {
+                  <dx-button
+                    text="Grant application"
+                    icon="plus"
+                    type="default"
+                    stylingMode="contained"
+                    [disabled]="!selectedApplicationId()"
+                    (onClick)="open('grantApplication')"
+                  />
+                } @else {
+                  <span
+                    >Authorization v{{
+                      selectedAccess()?.authorizationVersion
+                    }}</span
+                  ><button
+                    type="button"
+                    (click)="
+                      revoke(
+                        'UserApplication',
+                        selectedApplicationId()!,
+                        selectedAccess()!.applicationName + ' access'
+                      )
+                    "
+                  >
+                    Revoke access
+                  </button>
+                }
+              </div>
+            </section>
+            @if (selectedApplicationId() && applicationAccess(); as appAccess) {
+              @if (detailTab() === "access") {
+                <section class="explanation">
+                  <header>
+                    <div>
+                      <p>Effective evaluation</p>
+                      <h3>Why this user has access</h3>
+                    </div>
+                    <span>Deny always wins</span>
+                  </header>
+                  <div class="effective-grid">
+                    <article>
+                      <h4>Assigned roles</h4>
+                      @for (role of activeRoles(); track role.userRoleId) {
+                        <div class="explain-row">
+                          <div>
+                            <strong>{{ role.roleName }}</strong
+                            ><small>{{
+                              permissionCodes(role.roleId).join(", ") ||
+                                "No capability grants"
+                            }}</small>
+                          </div>
+                          <button
+                            type="button"
+                            (click)="
+                              revoke(
+                                'UserRole',
+                                role.userRoleId,
+                                role.roleName + ' assignment'
+                              )
+                            "
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      } @empty {
+                        <p class="empty">No active roles.</p>
+                      }
+                      <dx-button
+                        text="Assign role"
+                        icon="plus"
+                        stylingMode="outlined"
+                        [disabled]="!selectedAccess()"
+                        (onClick)="open('assignRole')"
+                      />
+                    </article>
+                    <article>
+                      <h4>User overrides</h4>
+                      @for (
+                        item of overrides();
+                        track item.userPermissionOverrideId
+                      ) {
+                        <div class="explain-row">
+                          <span
+                            class="effect"
+                            [class.deny]="item.effect === 'Deny'"
+                            >{{ item.effect }}</span
+                          >
+                          <div>
+                            <strong>{{ item.capabilityCode }}</strong
+                            ><small>{{ item.reason }}</small>
+                          </div>
+                          <button
+                            type="button"
+                            (click)="
+                              revoke(
+                                'UserPermissionOverride',
+                                item.userPermissionOverrideId,
+                                item.capabilityCode + ' override'
+                              )
+                            "
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      } @empty {
+                        <p class="empty">No active overrides.</p>
+                      }
+                      <dx-button
+                        text="Add override"
+                        icon="plus"
+                        stylingMode="outlined"
+                        [disabled]="
+                          !selectedAccess() || activeRoles().length === 0
+                        "
+                        [hint]="
+                          activeRoles().length === 0
+                            ? 'Assign at least one role before configuring user overrides.'
+                            : 'Add a user-specific capability exception'
+                        "
+                        (onClick)="open('override')"
+                      />
+                      @if (selectedAccess() && activeRoles().length === 0) {
+                        <small class="empty">
+                          Assign at least one role before configuring user
+                          overrides.
+                        </small>
+                      }
+                    </article>
+                  </div>
+                  <footer>
+                    <strong>Effective capabilities</strong>
+                    <div>
+                      @for (
+                        capability of selectedAccess()?.effectiveCapabilities ??
+                          [];
+                        track capability
+                      ) {
+                        <code>{{ capability }}</code>
+                      } @empty {
+                        <span>None</span>
+                      }
+                    </div>
+                  </footer>
+                </section>
+              }
+              @if (detailTab() === "roles") {
+                <section class="role-catalog">
+                  <header>
+                    <div>
+                      <p>Application roles</p>
+                      <h3>Role permission matrix</h3>
+                    </div>
+                    <div>
+                      <dx-button
+                        text="New role"
+                        icon="plus"
+                        stylingMode="outlined"
+                        (onClick)="open('role')"
+                      /><dx-button
+                        text="Grant capability"
+                        icon="plus"
+                        stylingMode="outlined"
+                        (onClick)="open('rolePermission')"
+                      />
+                    </div>
+                  </header>
+                  <div class="role-grid">
+                    @for (role of appAccess.roles; track role.roleId) {
+                      <article>
+                        <div>
+                          <h4>{{ role.roleName }}</h4>
+                          <code>{{ role.roleCode }}</code>
+                        </div>
+                        <span class="state" [class.inactive]="!role.isActive">{{
+                          role.isActive ? "Active" : "Inactive"
+                        }}</span>
+                        <p>{{ role.description || "No description." }}</p>
+                        <div class="chips">
+                          @for (
+                            cap of permissionCodes(role.roleId);
+                            track cap
+                          ) {
+                            <code>{{ cap }}</code>
+                          }
+                        </div>
+                        @if (role.isActive && !role.isSystem) {
+                          <button
+                            type="button"
+                            class="danger"
+                            (click)="revoke('Role', role.roleId, role.roleName)"
+                          >
+                            Revoke role
+                          </button>
+                        }
+                      </article>
+                    }
+                  </div>
+                </section>
+              }
+            }
+          }
+        } @else if (!loading()) {
+          <app-empty-state
+            icon="user"
+            title="User unavailable"
+            message="Choose an account to explain and manage its access."
+          />
+        }
+      </div>
+    }
+  </app-page>
+</div>
+@if (actionMode(); as mode) {
+  <app-page-header
+    [title]="actionTitle(mode)"
+    eyebrow="IAM · Users & access"
+    icon="user"
+    description="Review the details before saving."
+  >
+    <dx-button
+      page-actions
+      text="Back to users & access"
+      icon="arrowleft"
+      [disabled]="saving()"
+      (onClick)="close()"
+    />
+  </app-page-header>
+  <form
+    autocomplete="off"
+    class="inline-editor"
+    [attr.aria-label]="actionTitle(mode)"
+    [attr.aria-busy]="saving()"
+    (submit)="$event.preventDefault(); submit()"
+  >
+    @if (mode !== "user") {
+      <p>{{ formContext() }}</p>
+    }
+    @if (error(); as message) {
+      <div class="error" role="alert">{{ message }}</div>
+    }
+
+    @if (mode === "user" || mode === "role") {
+      <label
+        ><span>{{ mode === "user" ? "Employee code" : "Role code" }}</span
+        ><app-input
+          [disabled]="saving()"
+          required
+          [maxlength]="50"
+          [ariaLabel]="mode === 'user' ? 'Employee code' : 'Role code'"
+          [value]="code()"
+          (input)="code.set($any($event.target).value)" /></label
+      ><label
+        ><span>{{ mode === "user" ? "Display name" : "Role name" }}</span
+        ><app-input
+          [disabled]="saving()"
+          required
+          maxlength="200"
+          [ariaLabel]="mode === 'user' ? 'Display name' : 'Role name'"
+          [value]="name()"
+          (input)="name.set($any($event.target).value)"
+      /></label>
+    }
+    @if (mode === "profile") {
+      <label
+        ><span>Display name</span
+        ><app-input
+          [disabled]="saving()"
+          required
+          maxlength="200"
+          ariaLabel="Display name"
+          [value]="name()"
+          (input)="name.set($any($event.target).value)"
+      /></label>
+    }
+    @if (mode === "user" || mode === "profile") {
+      <label
+        ><span>Email (optional)</span
+        ><app-input
+          [disabled]="saving()"
+          type="email"
+          maxlength="254"
+          ariaLabel="Email"
+          [value]="email()"
+          (input)="email.set($any($event.target).value)"
+      /></label>
+      <label
+        ><span>Manager (optional)</span>
+        <app-lookup
+          ariaLabel="Manager"
+          emptyLabel="No manager"
+          [value]="managerUserId()"
+          [selectedLabel]="profileUser()?.managerDisplayName ?? null"
+          [searchOptions]="searchManagers"
+          [disabled]="saving()"
+          (valueChange)="managerUserId.set($event)"
+        />
+      </label>
+      <app-user-organization-mapping
+        [initialMapping]="organizationMapping()"
+        [departmentName]="profileUser()?.departmentName ?? null"
+        [teamName]="profileUser()?.teamName ?? null"
+        [branchName]="profileUser()?.branchName ?? null"
+        [stateId]="profileUser()?.stateId ?? null"
+        [stateName]="profileUser()?.stateName ?? null"
+        [regionId]="profileUser()?.regionId ?? null"
+        [regionName]="profileUser()?.regionName ?? null"
+        [countryId]="profileUser()?.countryId ?? null"
+        [countryName]="profileUser()?.countryName ?? null"
+        [disabled]="saving()"
+        (mappingChange)="organizationMapping.set($event)"
+      />
+    }
+    @if (mode === "role") {
+      <label
+        ><span>Description</span
+        ><app-text-area
+          [disabled]="saving()"
+          [value]="description()"
+          (input)="description.set($any($event.target).value)"
+        />
+      </label>
+    }
+    @if (mode === "grantApplication") {
+      <p>
+        Grant <strong>{{ userAccess()?.user?.displayName }}</strong> access to
+        the selected application?
+      </p>
+    }
+    @if (mode === "assignRole" || mode === "rolePermission") {
+      <label
+        ><span>Role</span
+        ><app-select
+          [disabled]="saving()"
+          required
+          ariaLabel="Role"
+          [value]="selectedRoleId() ?? ''"
+          (change)="selectedRoleId.set(+$any($event.target).value)"
+        >
+          @for (role of applicationAccess()?.roles ?? []; track role.roleId) {
+            @if (role.isActive) {
+              <app-option [value]="role.roleId">{{ role.roleName }}</app-option>
+            }
+          }
+        </app-select></label
+      >
+    }
+    @if (mode === "rolePermission" || mode === "override") {
+      <label
+        ><span>Capability</span
+        ><app-select
+          [disabled]="saving()"
+          required
+          ariaLabel="Capability"
+          [value]="selectedCapabilityId() ?? ''"
+          (change)="selectedCapabilityId.set(+$any($event.target).value)"
+        >
+          @for (
+            cap of applicationAccess()?.capabilities ?? [];
+            track cap.moduleCapabilityId
+          ) {
+            @if (cap.isActive) {
+              <app-option [value]="cap.moduleCapabilityId">{{
+                cap.capabilityCode
+              }}</app-option>
+            }
+          }
+        </app-select></label
+      >
+    }
+    @if (mode === "override") {
+      <label
+        ><span>Effect</span
+        ><app-select
+          [disabled]="saving()"
+          ariaLabel="Effect"
+          [value]="effect()"
+          (change)="effect.set($any($event.target).value)"
+        >
+          <app-option value="Allow">Allow</app-option>
+          <app-option value="Deny">Deny</app-option>
+        </app-select></label
+      ><label
+        ><span>Reason</span
+        ><app-text-area
+          [disabled]="saving()"
+          required
+          maxlength="500"
+          [value]="reason()"
+          (input)="reason.set($any($event.target).value)" /></label
+      ><label
+        ><span>Expires (optional)</span
+        ><app-input
+          [disabled]="saving()"
+          type="datetime-local"
+          ariaLabel="Expires"
+          [value]="expiresAt()"
+          (input)="expiresAt.set($any($event.target).value)"
+      /></label>
+      <aside>
+        Deny removes the capability even when a role or Allow override grants
+        it.
+      </aside>
+    }
+    <footer>
+      <dx-button
+        text="Cancel"
+        [disabled]="saving()"
+        stylingMode="outlined"
+        (onClick)="close()"
+      /><dx-button
+        class="confirm-action"
+        [text]="saving() ? 'Saving…' : 'Confirm'"
+        type="default"
+        stylingMode="contained"
+        [disabled]="saving()"
+        [useSubmitBehavior]="true"
+      />
+    </footer>
+  </form>
+}

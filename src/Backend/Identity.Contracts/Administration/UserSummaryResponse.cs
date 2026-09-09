@@ -1,0 +1,27 @@
+namespace Identity.Contracts.Administration;
+
+public sealed record UserSummaryResponse(
+    long UserId,
+    string EmployeeCode,
+    string DisplayName,
+    bool IsActive,
+    int SecurityVersion,
+    DateTime? LastLoginAt,
+    DateTime? LockoutEndAt,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    string? Email = null,
+    long? ManagerUserId = null,
+    string? ManagerDisplayName = null,
+    long? DepartmentId = null,
+    string? DepartmentName = null,
+    long? TeamId = null,
+    string? TeamName = null,
+    long? BranchId = null,
+    string? BranchName = null,
+    long? StateId = null,
+    string? StateName = null,
+    long? RegionId = null,
+    string? RegionName = null,
+    long? CountryId = null,
+    string? CountryName = null);

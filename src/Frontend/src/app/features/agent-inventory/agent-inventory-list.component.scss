@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.card,
+.install-help {
+  min-width: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  padding: 1.25rem;
+}
+h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.machines-hint,
+.install-help p,
+small,
+.pagination {
+  color: var(--app-text-secondary);
+  font-size: 0.85rem;
+}
+.machines-hint {
+  margin: 0;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.search app-input {
+  flex: 1;
+  min-width: 0;
+}
+dx-data-grid {
+  display: block;
+  min-width: 0;
+}
+.machine-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--app-accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.machine-icon {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.machine-link:hover {
+  text-decoration: underline;
+}
+.machine-link:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: 3px;
+}
+.status {
+  display: inline-block;
+  padding: 0.3rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--app-surface-muted);
+}
+.status.reporting {
+  color: var(--app-success-text);
+  background: var(--app-success-soft);
+}
+.status.warning {
+  color: var(--app-warning-text);
+  background: var(--app-warning-soft);
+}
+.status.revoked {
+  color: var(--app-danger-text);
+  background: var(--app-danger-soft);
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.pagination > div {
+  display: flex;
+  gap: 0.5rem;
+}
+.download {
+  align-self: center;
+  color: var(--app-accent-text);
+}
+.install-help {
+  margin-bottom: 1rem;
+}
+.install-help summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.install-command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.install-command code {
+  flex: 1 1 20rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 0.8rem;
+  background: var(--app-surface-muted);
+  user-select: all;
+}
+@media (max-width: 600px) {
+  .card,
+  .install-help {
+    padding: 0.85rem;
+  }
+  .search {
+    width: 100%;
+  }
+  .pagination {
+    flex-wrap: wrap;
+  }
+}

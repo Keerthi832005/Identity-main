@@ -1,0 +1,196 @@
+<app-page
+  eyebrow="Assurance"
+  title="Audit &amp; sessions"
+  subtitle="Investigate allow-listed security metadata and revoke active session families. Export only: the trail is append-only."
+>
+  <ng-container page-actions>
+    <app-bulk-actions
+      entityKey="audit-events"
+      entityLabel="audit events"
+      [columns]="auditColumns"
+      [exportRowsProvider]="exportAudit"
+      [exportOnly]="true"
+      (failed)="error.set($event)"
+    />
+    <dx-button
+      text="Export safe CSV"
+      stylingMode="outlined"
+      (onClick)="exportCsv()"
+    />
+  </ng-container>
+  @if (error(); as message) {
+    <app-inline-alert tone="danger" heading="That did not work">{{
+      message
+    }}</app-inline-alert>
+  }
+  @if (notice(); as message) {
+    <app-inline-alert tone="success">{{ message }}</app-inline-alert>
+  }
+  <section class="filters" aria-label="Audit filters">
+    <app-chip-select
+      label="Outcome"
+      [options]="outcomeOptions"
+      [value]="result()"
+      [disabled]="loading()"
+      (valueChange)="chooseOutcome($event)"
+    />
+    <app-chip-select
+      label="Window"
+      [options]="windowOptions"
+      [value]="timeWindow()"
+      [disabled]="loading()"
+      (valueChange)="chooseTimeWindow($event)"
+    />
+    <label
+      >Principal<app-lookup
+        ariaLabel="Principal"
+        emptyLabel="Anyone"
+        [searchOptions]="searchUsers"
+        [value]="userId()"
+        [disabled]="loading()"
+        (valueChange)="choosePrincipal($event)" /></label
+    ><label
+      >Application<app-lookup
+        ariaLabel="Application"
+        emptyLabel="Any application"
+        [searchOptions]="searchApplications"
+        [value]="applicationId()"
+        [disabled]="loading()"
+        (valueChange)="chooseApplication($event)" /></label
+    ><label
+      >Event type<app-input
+        ariaLabel="Event type"
+        [value]="eventType()"
+        (input)="onEventTypeInput($any($event.target).value)" /></label
+    ><label
+      >Correlation ID<app-input
+        ariaLabel="Correlation ID"
+        [value]="correlationId()"
+        (input)="onCorrelationIdInput($any($event.target).value)"
+    /></label>
+  </section>
+  <section
+    class="card sessions-card"
+    aria-labelledby="sessions-title"
+    [attr.aria-busy]="loading()"
+  >
+    <h2 id="sessions-title">Active sessions</h2>
+    @if (loading() && !data()) {
+      <app-skeleton shape="row" [lines]="6" />
+    } @else {
+      <app-data-grid
+        flush
+        density="compact"
+        ariaLabel="Session families"
+        [rows]="sessionRows()"
+        [columns]="sessionColumns"
+        keyExpr="tokenFamilyId"
+        [disabled]="loading()"
+        searchMode="client"
+        searchPlaceholder="Search sessions"
+        [pageSize]="10"
+        [pageSizes]="[10, 25, 50]"
+        infoText="Page {0} of {1} ({2} sessions)"
+        emptyText="No session families match the filters."
+      >
+        <div *appGridCell="'sessionStatus'; let cell">
+          <span class="session-status" [class.active]="cell.data.isActive">{{
+            cell.data.status
+          }}</span>
+        </div>
+        <div *appGridCell="'sessionActions'; let cell">
+          @if (cell.data.isActive) {
+            <dx-button
+              text="Revoke family"
+              type="danger"
+              stylingMode="outlined"
+              [disabled]="loading()"
+              (onClick)="revoke(cell.data.tokenFamilyId)"
+            />
+          }
+        </div>
+      </app-data-grid>
+    }
+  </section>
+  <section
+    class="card"
+    aria-labelledby="audit-title"
+    [attr.aria-busy]="loading()"
+  >
+    <div class="title">
+      <h2 id="audit-title">Audit timeline</h2>
+      <span>{{ firstShown() }}–{{ lastShown() }} of {{ total() }} events</span>
+    </div>
+    @if (loading() && !data()) {
+      <app-skeleton shape="row" [lines]="6" />
+    } @else {
+      <app-data-grid
+        flush
+        density="compact"
+        ariaLabel="Audit timeline"
+        [rows]="auditRows()"
+        [columns]="auditGridColumns"
+        keyExpr="authenticationAuditId"
+        [disabled]="loading()"
+        emptyText="No audit events match the filters."
+      >
+        <div *appGridCell="'auditEvent'; let cell">
+          <code class="chip mono">{{ cell.data.eventType }}</code>
+        </div>
+        <div *appGridCell="'auditPrincipal'; let cell">
+          {{ cell.data.principalName || "—" }}
+        </div>
+        <div *appGridCell="'auditApplication'; let cell">
+          {{ cell.data.applicationLabel || "—" }}
+        </div>
+        <div *appGridCell="'auditResult'; let cell">
+          <span
+            class="chip result"
+            [class.success]="cell.data.succeeded"
+            [class.failure]="!cell.data.succeeded"
+            [title]="cell.data.failureCode || null"
+            >{{ cell.data.succeeded ? "Succeeded" : "Failed" }}</span
+          >
+        </div>
+        <div *appGridCell="'auditCorrelation'; let cell">
+          <div class="correlation">
+            <code class="chip mono">{{ cell.data.correlationId }}</code>
+            <button
+              type="button"
+              [attr.aria-label]="
+                'Copy correlation id ' + cell.data.correlationId
+              "
+              (click)="copyCorrelationId(cell.data.correlationId)"
+            >
+              {{ copied() === cell.data.correlationId ? "Copied" : "Copy" }}
+            </button>
+            <button
+              type="button"
+              [attr.aria-label]="
+                'Show every event in request ' + cell.data.correlationId
+              "
+              [disabled]="loading()"
+              (click)="traceCorrelation(cell.data.correlationId)"
+            >
+              Trace
+            </button>
+          </div>
+        </div>
+        <div class="pagination" grid-footer>
+          <dx-button
+            text="Newer"
+            stylingMode="outlined"
+            [disabled]="loading() || skip() === 0"
+            (onClick)="load(skip() - pageSize)"
+          />
+          <dx-button
+            text="Older"
+            stylingMode="outlined"
+            [disabled]="loading() || !hasMore()"
+            (onClick)="load(skip() + pageSize)"
+          />
+        </div>
+      </app-data-grid>
+    }
+  </section>
+</app-page>

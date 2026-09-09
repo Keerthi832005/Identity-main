@@ -1,0 +1,39 @@
+<ng-content />
+<dx-select-box
+  [items]="items()"
+  valueExpr="value"
+  displayExpr="label"
+  [value]="value"
+  [disabled]="disabled"
+  [placeholder]="placeholder"
+  [searchEnabled]="items().length > 3"
+  searchMode="contains"
+  [searchExpr]="'label'"
+  [minSearchLength]="0"
+  noDataText="No matches"
+  [inputAttr]="inputAttributes"
+  (onInitialized)="captureEditor($any($event).component)"
+  (valueChange)="emitValue($event)"
+>
+  @if (hasIcons()) {
+    <div *dxTemplate="let item of 'item'" class="app-select__row">
+      @if (item.icon) {
+        <i class="dx-icon dx-icon-{{ item.icon }}" aria-hidden="true"></i>
+      }
+      <span>{{ item.label }}</span>
+    </div>
+    <div *dxTemplate="let item of 'field'" class="app-select__field">
+      @if (item?.icon) {
+        <i class="dx-icon dx-icon-{{ item.icon }}" aria-hidden="true"></i>
+      }
+      <dx-text-box
+        [value]="item?.label ?? ''"
+        [readOnly]="true"
+        [inputAttr]="inputAttributes"
+      />
+    </div>
+  }
+</dx-select-box>
+@if (validationError()) {
+  <span class="control-error" role="alert">{{ validationError() }}</span>
+}

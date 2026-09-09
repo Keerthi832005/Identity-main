@@ -1,0 +1,132 @@
+<app-page
+  eyebrow="Device management"
+  title="Machines & agents"
+  subtitle="Find an enrolled machine and open its hardware, software and agent details."
+>
+  <ng-container page-actions>
+    <a class="download" [href]="downloadUrl" download>Download Windows agent</a>
+    <dx-button
+      text="Refresh"
+      icon="refresh"
+      [disabled]="busy()"
+      (onClick)="load()"
+    />
+  </ng-container>
+  @if (error()) {
+    <app-inline-alert tone="danger" heading="Inventory unavailable">{{
+      error()
+    }}</app-inline-alert>
+  }
+  <details class="install-help">
+    <summary>Install a Windows agent</summary>
+    <p>
+      Open <strong>Windows PowerShell as administrator</strong> on the target
+      computer. Setup verifies the download, then asks for IAM administrator
+      sign-in. Use your IAM password, not the Terminal PIN.
+    </p>
+    <div class="install-command">
+      <code>{{ installCommand }}</code
+      ><dx-button
+        text="Copy command"
+        icon="copy"
+        (onClick)="copyInstallCommand()"
+      />
+    </div>
+    <small role="status">{{ copyStatus() }}</small>
+    <p>
+      Run commands only from your trusted IAM site. Windows script-signing
+      policy still applies.
+    </p>
+  </details>
+  <section
+    class="card machines"
+    aria-label="Enrolled machines"
+    [attr.aria-busy]="busy()"
+  >
+    <p class="machines-hint">
+      Open a hostname to view details. Windows users reflect the last inventory,
+      reported every 30 minutes · page refreshes every minute.
+    </p>
+    <app-data-grid
+      flush
+      heading="Enrolled machines"
+      ariaLabel="Machines"
+      [count]="page().total"
+      [rows]="rows()"
+      [columns]="columns"
+      keyExpr="installationId"
+      [loading]="busy()"
+      searchMode="server"
+      [searchTerm]="query()"
+      searchPlaceholder="Search hostname"
+      (searchTermChange)="query.set($event); search()"
+      loadingText="Loading machines…"
+      emptyText="No machines found. Search another hostname or enroll a Windows agent."
+    >
+      <div *appGridCell="'machineName'; let cell">
+        <a
+          class="machine-link"
+          [routerLink]="['/agents', cell.data.installationId]"
+          [queryParams]="listQueryParams()"
+          ><svg
+            class="machine-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="4" y="5" width="16" height="10" rx="1.5"></rect>
+            <path d="M2 18.5h20"></path></svg
+          >{{ cell.data.hostname }}</a
+        >
+      </div>
+      <div *appGridCell="'reportingStatus'; let cell">
+        <span
+          class="status"
+          [class.reporting]="cell.data.reportingStatus === 'Reporting'"
+          [class.warning]="
+            cell.data.reportingStatus !== 'Reporting' && cell.data.isActive
+          "
+          [class.revoked]="!cell.data.isActive"
+          >{{ cell.data.reportingStatus }}</span
+        >
+      </div>
+      <div *appGridCell="'trustStatus'; let cell">
+        {{ cell.data.isTrusted ? "Trusted" : "Inactive" }}
+      </div>
+      <div *appGridCell="'lastReport'; let cell">
+        {{
+          cell.data.lastReportAt
+            ? (cell.data.lastReportAt | date: "dd MMM yyyy, HH:mm")
+            : "Not received"
+        }}
+      </div>
+      <div class="pagination" grid-footer>
+        <span role="status"
+          >{{ page().total ? page().skip + 1 : 0 }}–{{
+            page().skip + page().items.length
+          }}
+          of {{ page().total }} machines</span
+        >
+        @if (page().total > 50 || page().skip > 0) {
+          <div>
+            <dx-button
+              text="Previous"
+              icon="chevronleft"
+              [disabled]="busy() || page().skip === 0"
+              (onClick)="navigatePage(page().skip - 50)"
+            /><dx-button
+              text="Next"
+              icon="chevronright"
+              [disabled]="busy() || page().skip + 50 >= page().total"
+              (onClick)="navigatePage(page().skip + 50)"
+            />
+          </div>
+        }
+      </div>
+    </app-data-grid>
+  </section>
+</app-page>

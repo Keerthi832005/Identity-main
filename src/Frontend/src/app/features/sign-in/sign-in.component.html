@@ -1,0 +1,177 @@
+<div class="sign-in">
+  <header class="sign-in__bar">
+    <a class="brand" href="/" aria-label="Identity Administration home">
+      <span class="brand__mark" aria-hidden="true"
+        ><img src="favicon.ico" alt=""
+      /></span>
+      <span class="brand__lockup">
+        <img class="brand__logo" src="fujitec-logo.png" alt="Fujitec" />
+        <small>{{ applicationName }}</small>
+      </span>
+    </a>
+    <dx-button
+      stylingMode="text"
+      [icon]="theme.resolved() === 'dark' ? 'sun' : 'moon'"
+      [hint]="themeAction()"
+      [elementAttr]="{ 'aria-label': themeAction() }"
+      (onClick)="theme.toggle()"
+    />
+  </header>
+
+  <main class="sign-in__layout">
+    <section class="sign-in__intro" aria-labelledby="welcome-title">
+      <p class="eyebrow">Identity control plane</p>
+      <h1 id="welcome-title">Secure access. Clear accountability.</h1>
+      <p class="lead">
+        Manage applications, users, roles, capabilities, devices, and
+        authentication controls from one independently secured workspace.
+      </p>
+      <div class="trust-grid">
+        <article>
+          <i class="dx-icon dx-icon-key"></i><strong>Least privilege</strong
+          ><span>Role grants with explicit user Allow and Deny overrides.</span>
+        </article>
+        <article>
+          <i class="dx-icon dx-icon-lock"></i><strong>Protected sessions</strong
+          ><span
+            >Short-lived access with rotating HttpOnly refresh cookies.</span
+          >
+        </article>
+        <article>
+          <i class="dx-icon dx-icon-event"></i><strong>Auditable change</strong
+          ><span
+            >Every administration action is attributable and append-only.</span
+          >
+        </article>
+      </div>
+    </section>
+
+    <section class="sign-in__workspace" aria-labelledby="sign-in-title">
+      <div class="sign-in__card">
+        <p class="eyebrow">Administrator access</p>
+        <h2 id="sign-in-title">
+          {{ step() === "credentials" ? "Sign in" : "Verify your identity" }}
+        </h2>
+        <p class="muted">
+          {{
+            step() === "credentials"
+              ? "Use your assigned employee credentials."
+              : "Enter the code from your authenticator app."
+          }}
+        </p>
+
+        @if (retry.remainingSeconds(); as seconds) {
+          <div
+            class="alert"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <i class="dx-icon dx-icon-clock" aria-hidden="true"></i>
+            <span
+              >Too many authentication requests. Try again in
+              {{ seconds }} seconds.</span
+            >
+          </div>
+        }
+        @if (error(); as message) {
+          <div class="alert" role="alert">
+            <i class="dx-icon dx-icon-warning"></i><span>{{ message }}</span>
+          </div>
+        }
+
+        @if (step() === "credentials") {
+          <form
+            autocomplete="off"
+            (submit)="$event.preventDefault(); submitCredentials()"
+          >
+            @if (pasteNotice(); as filled) {
+              <p class="paste-notice" role="status">
+                <i class="dx-icon dx-icon-check" aria-hidden="true"></i
+                >{{ filled }}
+              </p>
+            }
+            <label>
+              <span>Employee code</span>
+              <app-input
+                type="text"
+                name="employeeCode"
+                ariaLabel="Employee code"
+                required
+                [disabled]="submitting()"
+                [value]="employeeCode()"
+                (input)="employeeCode.set($any($event.target).value)"
+              />
+            </label>
+            <label>
+              <span>Password</span>
+              <app-input
+                type="secret"
+                name="password"
+                ariaLabel="Password"
+                required
+                [disabled]="submitting()"
+                [value]="password()"
+                (input)="password.set($any($event.target).value)"
+              />
+            </label>
+            <dx-button
+              class="primary-action"
+              [text]="submitting() ? 'Signing in…' : 'Sign in securely'"
+              icon="runner"
+              type="default"
+              stylingMode="contained"
+              [disabled]="submitting() || retry.remainingSeconds() > 0"
+              [useSubmitBehavior]="true"
+            />
+          </form>
+        } @else {
+          <form
+            autocomplete="off"
+            (submit)="$event.preventDefault(); submitMfa()"
+          >
+            <label>
+              <span>Authenticator code</span>
+              <app-input
+                class="mfa-code"
+                type="text"
+                name="code"
+                ariaLabel="Authenticator code"
+                inputmode="numeric"
+                maxlength="6"
+                required
+                [disabled]="submitting()"
+                [value]="code()"
+                (input)="code.set($any($event.target).value)"
+              />
+            </label>
+            <div class="form-actions">
+              <dx-button
+                text="Back"
+                stylingMode="outlined"
+                [disabled]="submitting()"
+                (onClick)="back()"
+              />
+              <dx-button
+                [text]="submitting() ? 'Verifying…' : 'Verify'"
+                type="default"
+                stylingMode="contained"
+                [disabled]="submitting() || retry.remainingSeconds() > 0"
+                [useSubmitBehavior]="true"
+              />
+            </div>
+          </form>
+        }
+
+        <div class="support-note">
+          <i class="dx-icon dx-icon-info"></i
+          ><span
+            >Access is provisioned by an existing identity administrator.
+            Credentials are never stored in this browser.</span
+          >
+        </div>
+      </div>
+      <footer>Identity Administration · Secure office access</footer>
+    </section>
+  </main>
+</div>

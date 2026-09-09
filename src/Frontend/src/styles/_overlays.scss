@@ -1,0 +1,71 @@
+// Overlays.
+//
+// Popups, drop-downs and tooltips render into a body portal, so they are themed globally and pick
+// up the dark swatch from <body> rather than from any component scope.
+
+/* Overlays (popup, dropdown, tooltip) render into a body portal, so they are themed globally and
+   pick up the dark swatch from <body> rather than a component scope. */
+.dx-popup-wrapper .dx-overlay-content {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow-lg);
+  color: var(--app-text);
+}
+
+.dx-popup-title {
+  background: transparent;
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-text);
+}
+
+.dx-popup-content {
+  color: var(--app-text);
+}
+
+.app-tooltip .dx-overlay-content {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  box-shadow: var(--app-shadow-sm);
+  color: var(--app-text);
+  max-width: 22rem;
+}
+
+.app-tooltip .dx-popup-content {
+  padding: 0.4rem 0.65rem;
+}
+
+.app-tooltip .dx-popover-arrow::after {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+
+/* Icon-bearing select options (app-option[icon]) in both the dropdown list and the closed field. */
+.app-select__row,
+.app-select__field {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.app-select__row .dx-icon,
+.app-select__field .dx-icon {
+  color: var(--app-text-secondary);
+  flex: 0 0 auto;
+  font-size: 16px;
+}
+
+.app-select__field {
+  padding-inline-start: var(--app-editor-pad-inline);
+}
+
+.app-select__field .dx-textbox {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-select__field .dx-texteditor-input {
+  padding-inline-start: 0 !important;
+}

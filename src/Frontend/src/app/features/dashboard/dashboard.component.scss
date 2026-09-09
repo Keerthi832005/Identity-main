@@ -1,0 +1,97 @@
+:host {
+  display: block;
+}
+
+.metrics {
+  display: grid;
+  gap: var(--app-space-3);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.metric {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  box-shadow: var(--app-shadow-sm);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--app-space-4);
+  text-decoration: none;
+  transition:
+    border-color var(--app-duration-fast) var(--app-ease-standard),
+    box-shadow var(--app-duration-fast) var(--app-ease-standard);
+}
+
+.metric:hover {
+  border-color: var(--app-primary-border);
+  box-shadow: var(--app-shadow-md);
+}
+
+.metric__label {
+  color: var(--app-text-secondary);
+  font-family: var(--app-font-display);
+  font-size: 0.786rem;
+  font-weight: 600;
+  letter-spacing: var(--app-letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.metric__value {
+  font-family: var(--app-font-mono);
+  font-size: 1.857rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: var(--app-line-height-tight);
+}
+
+.metric__meta {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-caption);
+}
+
+.metric--warning {
+  border-color: var(--app-warning-border);
+}
+
+.metric--warning .metric__value {
+  color: color-mix(in srgb, var(--app-warning) 72%, var(--app-text));
+}
+
+.metric--danger {
+  border-color: var(--app-danger-border);
+}
+
+.metric--danger .metric__value {
+  color: color-mix(in srgb, var(--app-danger) 72%, var(--app-text));
+}
+
+.metric__spark {
+  height: 32px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.outcome-chip {
+  background: var(--app-success-soft);
+  border: 1px solid var(--app-success-border);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--app-success) 60%, var(--app-text));
+  display: inline-block;
+  font-size: var(--app-font-size-caption);
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+}
+
+.outcome-chip--danger {
+  background: var(--app-danger-soft);
+  border-color: var(--app-danger-border);
+  color: color-mix(in srgb, var(--app-danger) 65%, var(--app-text));
+}
+
+.generated {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-caption);
+  margin: 0;
+}

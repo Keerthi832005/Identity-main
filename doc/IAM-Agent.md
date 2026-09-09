@@ -1,0 +1,64 @@
+# IAM.Agent
+
+The agent runs on **each Windows terminal PC or Windows Server used as a terminal**. IAM hosts downloads, the signed OTA feed and the machine inventory. PTS reads the local identity. Hostname is the display name; IAM's numeric DeviceId remains the database identifier. An installation GUID survives upgrades and computer renames. Implementation, release scripts and task records are owned by IAM; only the consuming terminal UI is in PTS.
+
+The administrator installer registers the local hostname through existing IAM APIs, captures the assigned terminal ID and performs IAM's audited trust operation. Operators never type a terminal ID. Windows administrator rights and an authorized IAM administrator session (including MFA) are required once. Passwords, refresh tokens and bearer tokens are not persisted. IAM trust expiry, revocation, employee PIN and permission checks remain authoritative. Local metadata is a preference, not proof of device possession or a new authentication credential.
+
+The read-only loopback API at http://127.0.0.1:43127/v1/identity validates Host, Origin and a custom request header. Only the configured HTTPS PTS origin can read hostname, OS, architecture, agent version and terminal ID. No usernames, passwords, files, MAC addresses or network inventory are exposed. Browsers may require local-network permission; it is not bypassed.
+
+Windows Service IAM.Agent is a stable supervisor with delayed automatic startup and service recovery. It monitors a separate versioned agent process. It checks an HTTPS feed (no redirects), verifies RSA-PSS signed manifests with an administrator-installed public key, validates size/hash and safely extracts updates. Candidate health must pass before committing version state; failures roll back. Failed versions are quarantined until a newer release. Interrupted switches recover the last committed version. No downloaded scripts execute. Agent code and its bundled .NET runtime update automatically; the small supervisor trust boundary updates by rerunning the installer.
+
+Scope: Windows x64, self-contained .NET 10, existing IAM APIs, automatic local discovery/startup, signed OTA/rollback, downloadable bundle and tests. No SAP/business writes, unrelated grants, credential resets or changes to existing devices. Live fleet installation is separate from synthetic acceptance.
+
+## Inventory and authorization
+
+The installer creates a P-256 device key protected with Windows DPAPI and enrolls its public key through `POST /api/v1/admin/agents/enroll`. Only an IAM administrator can register and trust a machine. Enrollment is idempotent, refuses a changed key and does not silently restore revoked or expired trust. IAM's existing default trust duration is 30 days; administrators must manage renewal through the existing device controls.
+
+Every 30 minutes, the worker sends an ECDSA-signed snapshot to `POST /api/v1/agents/report`. IAM checks the registered key, installation ID, timestamp, replay protection, size and active device status before storing it. A revoked machine cannot report. Expired terminal trust blocks terminal use but does not itself revoke inventory reporting. Windows time must be synchronized within 10 minutes.
+
+IAM **Machines & agents** shows hostname, terminal ID, agent version, last report, trust state, operating system, manufacturer/model, BIOS serial, CPU, memory, storage and machine-wide installed software. Software comes from the 32/64-bit machine uninstall registry, not MSI repair-triggering queries. Per-user and portable software are excluded; missing hardware and truncated lists generate visible warnings. No passwords, PINs, user files, usernames, browsing history, MAC addresses or network inventory are collected. A computer rename changes the displayed hostname without changing its enrollment.
+
+## Publish and commission
+
+The production target is **IAM `https://iam.fujitecindia.com` and PTS `https://pts.fujitecindia.com`**, as specified in the [deployment guide](../../DEPLOYMENT.md#production-hostnames-and-topology). It is not yet a commissioned production/fleet installation. The example below is for the existing local environment; never distribute its `.local` profile or pilot signer as a production package.
+
+For an approved production package, use `-IdentityBaseUrl 'https://iam.fujitecindia.com/identity/'` and `-PtsOrigin 'https://pts.fujitecindia.com'`. IAM handles enrollment, reports and the `/identity/api/v1/agents/releases/` update feed; the PTS origin separately controls browser access to local identity. After provisioning and verifying the production host/feed, install with `irm 'https://iam.fujitecindia.com/identity/install.ps1' | iex` in administrator Windows PowerShell. Follow normal signing policy and IAM approval. Existing local identities cannot be silently repointed or copied into production.
+
+1. Deploy the IAM API/frontend and PTS terminal changes through the existing release process. Review the target journal and all pending IAM migrations in the selected release, including `0012_agent_inventory.sql` and later prerequisites. Back up and apply the reviewed migrations with the matching IAM database runner before switching the API; never apply them to PTS databases.
+2. Build a release on Windows with PowerShell 7 and the .NET 10 SDK. Use an organization-managed RSA private key in a protected directory outside any web content or repository. The first release may generate a new key with `-CreateSigningKey`; back it up securely and keep using the same key for subsequent releases.
+
+   ```powershell
+   ./IAM/scripts/Publish-Agent.ps1 -Version 1.0.0 `
+     -SigningKeyPath 'D:/ProtectedReleaseKeys/IAM.Agent/private.pem' `
+     -IdentityBaseUrl 'https://ptsapp.local.fujitecindia.com/identity/' `
+     -PtsOrigin 'https://ptsapp.local.fujitecindia.com' -CreateSigningKey
+   ```
+
+3. Copy only the generated **feed directory** to a durable release directory. Configure the IAM API's `AgentDistribution:RootPath` (environment variable `AgentDistribution__RootPath`) to its absolute path. Grant the IIS application-pool identity read access and release administrators write access. Never copy the private signer into this directory. Use atomic replacement of `latest.json` only after the corresponding immutable version ZIP has been copied. Keep older version ZIPs available.
+4. Check `/identity/api/v1/agents/download` and `/identity/api/v1/agents/releases/latest.json` on the configured host. Unconfigured distribution returns 404. Both UI download links use IAM's configured base URL. Version packages are allowlisted; arbitrary files cannot be downloaded through these endpoints.
+5. On each managed terminal, download and extract `IAM.Agent.Setup.zip`, then run `Install.cmd`, or use the hosted one-command installation documented in root `DEPLOYMENT.md`. Approve normal Windows elevation. The FUJITEC IAM setup dialog requests employee code and IAM administrator password (not terminal PIN); a separate masked dialog requests the authenticator code when MFA is required. No hostname, installation ID or terminal number is entered. Cancel stops approval without enrolling a device. The installer creates the delayed-auto-start `IAM.Agent` service and recovery actions. Organization execution policy remains enforced; use approved Authenticode signing/distribution for the installer scripts and executables where required. The provided bundle has an RSA-signed update manifest, but no organization Authenticode certificate is embedded or fabricated.
+6. Check that the computer appears in IAM and receives its first inventory. Open PTS on that computer, allow the site's local-network access if the browser prompts, and use **Retry detection**. Confirm the hostname/terminal ID appear automatically. IAM account and employee PIN checks remain unchanged.
+7. Pilot a reboot, offline/reconnect cycle, approved IAM trust expiry/revocation and a signed update on a non-production machine before fleet rollout. Running the service only on the central web server does not identify remote browsers' PCs.
+
+## Updates, support and removal
+
+Publish each new worker/runtime build with a strictly higher three-part version and the same signing key. The supervisor checks the feed about hourly, with jitter. Manifests expire after 90 days. Publish a fresh valid release before expiry; expired/invalid feeds leave the installed agent running. Treat published version numbers as immutable. A failed version is quarantined; publish a newer corrected version rather than replacing its contents. Signing-key rotation and supervisor upgrades require an administrator-controlled reinstall.
+
+`%ProgramFiles%/IAM.Agent` holds the supervisor and versioned workers. `%ProgramData%/IAM.Agent` holds protected enrollment/configuration, device key, current/previous/failed version state, `report-status.json` and `update-status.json`. Access is restricted to SYSTEM and administrators. The supervisor uses Windows Application event logging with safe error types and a Windows job to stop orphaned child processes. Old versions and installer backups are deliberately retained; administrators may clean reviewed, inactive versions during maintenance. Do not remove the current or rollback version.
+
+If detection fails, check service status, loopback port 43127, exact configured PTS origin and browser permission. If reporting fails, check HTTPS connectivity/certificate trust, system clock and device revocation. There is no certificate-validation bypass. Reinstalling with a different site is refused; moving sites or replacing a device identity needs an explicit administrator migration.
+
+Run the installed `Uninstall-IAMAgent.ps1` as administrator to stop/remove the owned service. It retains binaries and identity for recovery; revoke the device in IAM separately. It never removes unrelated services, files or IAM records.
+
+## Rollout status and historical acceptance
+
+Local IAM deployment and a real local agent installation subsequently completed on 31 August 2026. See the [local API/app deployment record](../tasks/A007-iam-api-app-deployment.md), [modern installer record](../tasks/modern-agent-installer.md), and [reinstall fix and live repeat verification](../tasks/agent-reinstall-fix.md). This does not establish production or fleet acceptance. Use the [current operating procedure](../../DEPLOYMENT.md#8-iam-agent-package-and-installation-on-terminal-pcs) and exact release receipts for downloads, service checks and repair; do not select the older artifact below as the current release.
+
+The following is the **historical initial synthetic acceptance snapshot**, before that live local rollout. Its 1.0.0 commissioning bundle was at `IAM/artifacts/agent-publish/1.0.0-07c4d03c/feed/IAM.Agent.Setup.zip` (80,127,633 bytes, SHA-256 `C6212E2EC2ADE39383E8EB9279CE1D0095D7D2B372264C4198921757B83DEAB4`). It used a protected local acceptance key, not an organization-approved production signer. Rebuild with the approved signer before fleet distribution. Counts and remaining checks below describe that initial acceptance run, not the latest release.
+
+- `dotnet test IAM/Identity.slnx`: 187 passed; 35 database-dependent tests skipped without connection configuration. The agent's 10 tests ran, including real executable upgrade and rollback.
+- `IAM/scripts/Test-AgentInventory.ps1 -SqlServer 'lpc:<computer>\SQLDEVELOPER2022'`: eight focused schema/enrollment/report tests passed with all 12 migrations and replay; the disposable database was removed. Earlier A002 SQL Express testing also passed. A later SQL Express rerun timed out during base-schema migration and cleanup could not reconnect. A006 subsequently completed the user's approved SQL restart, verified IAM/PTS readiness, and removed only the positively identified empty test database. See `doc/IAM-Agent-Rollout.md` for the recovery evidence and remaining deployment prerequisites.
+- IAM frontend: 134 tests passed; PTS: 287 passed. Both production builds passed. Existing DevExtreme CommonJS/rrule sourcemap warnings remain.
+- In-app browser acceptance used `scripts/Agent-BrowserFixture.mjs` with clearly labeled synthetic data: hardware/software rendering, filtering, current download links and missing-agent blocking/retry guidance passed. No browser runtime errors were observed; the existing DevExtreme theme-load warning appeared. Evidence is in ignored `IAM/artifacts/agent-acceptance/`. A live HTTPS browser-to-installed-service happy path remains part of administrator commissioning.
+
+For repeatable process tests, publish IAM.Agent executables as 1.0.0 and 1.0.1, set `IAM_AGENT_TEST_EXECUTABLE` and `IAM_AGENT_TEST_UPGRADE_EXECUTABLE` to their full paths, and run the agent test project. These tests use disposable directories and synthetic configuration, not live IAM enrollment. The browser fixture is local test infrastructure, never production data or a deployed bypass.

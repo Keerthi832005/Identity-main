@@ -1,0 +1,28 @@
+<div class="software-help">
+  <p>
+    Windows may report an installation or last-serviced date, without a time.
+    Missing values are shown as “Not reported”. Size is an estimate; registry
+    view identifies the registration source, not necessarily application
+    architecture.
+  </p>
+  <dx-button
+    text="Clear software filters"
+    icon="clear"
+    stylingMode="outlined"
+    (onClick)="clearFilters()"
+  />
+</div>
+<app-data-grid
+  flush
+  heading="Installed software"
+  ariaLabel="Installed software"
+  [rows]="rows()"
+  [columns]="columns"
+  keyExpr="rowId"
+  searchMode="client"
+  searchPlaceholder="Search all software"
+  [pageSize]="10"
+  [pageSizes]="[10, 25, 50, 100]"
+  infoText="Page {0} of {1} ({2} applications)"
+  emptyText="No installed software to display. If filters are active, clear them to see all reported software."
+/>

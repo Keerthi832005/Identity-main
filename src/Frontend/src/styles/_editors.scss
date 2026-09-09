@@ -1,0 +1,193 @@
+// Editor standard.
+//
+// Every single-line DevExtreme editor is locked to one box, and all padding, affordance and
+// validation insets are derived from it rather than from the theme's own metrics.
+
+/* Editor standard ------------------------------------------------------------
+   Every single-line DevExtreme editor is locked to one 40px box, so all padding and inset values
+   below are derived from that box rather than from the theme's own metrics. */
+.dx-texteditor:not(.dx-textarea) {
+  border-radius: var(--app-editor-radius) !important;
+  height: var(--app-editor-height) !important;
+  min-height: var(--app-editor-height) !important;
+  overflow: hidden;
+}
+
+.dx-texteditor:not(.dx-textarea)::before,
+.dx-texteditor:not(.dx-textarea)::after {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.dx-texteditor:not(.dx-textarea) .dx-texteditor-container,
+.dx-texteditor:not(.dx-textarea) .dx-texteditor-input-container {
+  height: 100%;
+}
+
+.dx-texteditor:not(.dx-textarea) .dx-texteditor-input,
+.dx-texteditor:not(.dx-textarea) .dx-placeholder::before {
+  font-family: inherit;
+  font-size: var(--app-font-size-body);
+  padding-block: var(--app-editor-pad-block);
+  padding-inline: var(--app-editor-pad-inline);
+}
+
+.dx-texteditor:not(.dx-textarea) .dx-texteditor-input {
+  height: var(--app-editor-inner-height);
+  line-height: var(--app-editor-line-height);
+  min-height: var(--app-editor-inner-height);
+}
+
+.dx-texteditor-buttons-container {
+  align-items: center;
+  height: 100%;
+}
+
+/* Buttons share the editor's 40px box so a button sitting beside an input lines up exactly,
+   rather than the theme's shorter default leaving a 4px step in every toolbar and form row. */
+.dx-button {
+  border-radius: var(--app-editor-radius);
+  height: var(--app-editor-height);
+  min-height: var(--app-editor-height);
+}
+
+.dx-button .dx-button-content {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding-block: 0;
+}
+
+/* Icon-only buttons stay square instead of inheriting the wide text padding. */
+.dx-button.dx-button-has-icon:not(.dx-button-has-text) {
+  width: var(--app-editor-height);
+  min-width: var(--app-editor-height);
+}
+
+.dx-button.dx-button-has-icon:not(.dx-button-has-text) .dx-button-content {
+  padding-inline: 0;
+}
+
+.dx-searchbox .dx-icon-search,
+.dx-texteditor .dx-clear-button-area,
+.dx-dropdowneditor-button,
+.dx-dropdowneditor-icon {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  margin: 0;
+  min-width: var(--app-editor-affordance);
+  padding: 0;
+  width: var(--app-editor-affordance);
+}
+
+.dx-texteditor.dx-searchbox .dx-texteditor-input,
+.dx-texteditor.dx-searchbox .dx-placeholder::before {
+  padding-block: var(--app-editor-pad-block);
+  padding-inline: var(--app-editor-affordance);
+}
+
+.dx-searchbox .dx-icon-search {
+  color: var(--app-text-secondary);
+  font-size: 20px;
+  inset-block: 0;
+  inset-inline-start: 0;
+  line-height: 1;
+  position: absolute;
+}
+
+.dx-dropdowneditor .dx-texteditor-input,
+.dx-dropdowneditor .dx-placeholder::before {
+  padding-inline-end: var(--app-editor-affordance);
+}
+
+.dx-dropdowneditor-button .dx-button-content {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  padding: 0;
+}
+
+.dx-texteditor .dx-clear-button-area .dx-icon-clear {
+  align-items: center;
+  background: none;
+  border-radius: 0;
+  color: var(--app-text-secondary);
+  display: flex;
+  font-size: 16px;
+  height: 16px;
+  inset: auto;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  min-width: 16px;
+  position: static;
+  transform: none;
+  width: 16px;
+}
+
+.dx-texteditor .dx-clear-button-area .dx-icon-clear::before {
+  inset: auto;
+  margin: 0;
+  position: static;
+  width: auto;
+}
+
+.dx-texteditor .dx-texteditor-buttons-container > .dx-clear-button-area {
+  margin-inline: 0;
+}
+
+.dx-texteditor .dx-clear-button-area:hover .dx-icon-clear {
+  color: var(--app-text);
+}
+
+.dx-texteditor.dx-texteditor-empty .dx-clear-button-area {
+  display: none;
+}
+
+.dx-texteditor.dx-show-clear-button:not(.dx-texteditor-empty):not(.dx-searchbox)
+  .dx-texteditor-input {
+  padding-inline-end: var(--app-editor-affordance);
+}
+
+.dx-texteditor.dx-invalid.dx-show-invalid-badge
+  .dx-texteditor-input-container::after,
+.dx-texteditor.dx-validation-pending
+  .dx-texteditor-input-container
+  .dx-pending-indicator {
+  inset-inline-end: var(--app-editor-badge-inset);
+  margin-top: -11px;
+  top: 50%;
+}
+
+.dx-texteditor.dx-invalid.dx-show-invalid-badge:not(.dx-texteditor-empty)
+  .dx-texteditor-input,
+.dx-texteditor.dx-validation-pending:not(.dx-texteditor-empty)
+  .dx-texteditor-input {
+  padding-inline-end: var(--app-editor-affordance);
+}
+
+.dx-texteditor.dx-show-clear-button.dx-invalid.dx-show-invalid-badge:not(
+    .dx-texteditor-empty
+  )
+  .dx-texteditor-input-container::after {
+  inset-inline-end: calc(
+    var(--app-editor-affordance) + var(--app-editor-badge-inset)
+  );
+}
+
+.dx-texteditor.dx-show-clear-button.dx-invalid.dx-show-invalid-badge:not(
+    .dx-texteditor-empty
+  )
+  .dx-texteditor-input {
+  padding-inline-end: calc(var(--app-editor-affordance) * 2);
+}
+
+.required-marker,
+.field__required {
+  color: var(--app-danger);
+  font-style: normal;
+  font-weight: 700;
+}

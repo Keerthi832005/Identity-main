@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2) var(--app-space-3);
+  padding-block: var(--app-space-2);
+}
+
+.bar__lead,
+.bar__trail {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2);
+  min-width: 0;
+}
+
+/* Never wraps: the chooser dropping onto a line of its own under the search is exactly the
+   stray-button layout this toolbar exists to prevent. The search shrinks instead. */
+.bar__trail {
+  flex-wrap: nowrap;
+  margin-left: auto;
+  min-width: 0;
+}
+
+/* Grows to the room the toolbar has rather than sitting at a fixed 260px, so a longer placeholder
+   like "Search code, name or description" is not cut off on a wide screen. */
+.search {
+  flex: 1 1 22rem;
+  max-width: 32rem;
+  min-width: 10rem;
+}
+
+h3 {
+  font-family: var(--app-font-display);
+  font-size: var(--app-font-size-subheading);
+  font-weight: 600;
+  margin: 0;
+}
+
+h3 small {
+  color: var(--app-text-secondary);
+  margin-left: var(--app-space-2);
+}
+
+.chips {
+  align-items: center;
+  border-top: 1px dashed var(--app-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2);
+  padding-block: var(--app-space-2);
+}
+
+.chips__label {
+  color: var(--app-text-secondary);
+  font-size: var(--app-font-size-caption);
+  font-weight: 600;
+  letter-spacing: var(--app-letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.chip {
+  align-items: center;
+  background: var(--app-primary-soft);
+  border: 1px solid var(--app-primary-border);
+  border-radius: 999px;
+  color: var(--app-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--app-font-size-caption);
+  gap: 0.35rem;
+  max-width: 22rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.chip span {
+  color: var(--app-text-secondary);
+}
+
+.chip b {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip .dx-icon {
+  font-size: 13px;
+}
+
+.chip:hover {
+  border-color: var(--app-primary);
+}
+
+.chips__clear {
+  background: none;
+  border: 0;
+  color: var(--app-accent-text);
+  cursor: pointer;
+  font-size: var(--app-font-size-caption);
+  font-weight: 600;
+  padding: 0.2rem 0.25rem;
+  text-decoration: underline;
+}

@@ -1,0 +1,42 @@
+<dialog
+  #dialog
+  role="alertdialog"
+  aria-modal="true"
+  aria-labelledby="confirmation-title"
+  aria-describedby="confirmation-message"
+  (cancel)="cancel($event)"
+  (close)="decided.emit(false)"
+  (click)="backdrop($event)"
+  (keydown)="containFocus($event)"
+>
+  <section
+    class="confirmation"
+    [class.confirmation--danger]="request().tone === 'danger'"
+  >
+    <header>
+      <span class="confirmation__icon" aria-hidden="true"
+        ><i class="dx-icon dx-icon-warning"></i
+      ></span>
+      <div>
+        <span class="confirmation__eyebrow">Identity Administration</span>
+        <h2 id="confirmation-title">{{ request().title }}</h2>
+      </div>
+    </header>
+    <p id="confirmation-message">{{ request().message }}</p>
+    <footer>
+      <dx-button
+        #cancelButton
+        text="Cancel"
+        stylingMode="outlined"
+        (onClick)="decided.emit(false)"
+      />
+      <dx-button
+        class="confirmation__approve"
+        [text]="request().confirmText"
+        type="default"
+        stylingMode="contained"
+        (onClick)="decided.emit(true)"
+      />
+    </footer>
+  </section>
+</dialog>

@@ -1,0 +1,73 @@
+@if (isCheckbox) {
+  <dx-check-box
+    [value]="checked"
+    [disabled]="disabled"
+    [elementAttr]="inputAttributes"
+    (onInitialized)="captureEditor($any($event).component)"
+    (onValueChanged)="emitValue($event.value, $event.event)"
+  />
+} @else if (isNumber) {
+  <dx-number-box
+    [value]="$any(numberValue)"
+    [disabled]="disabled"
+    [readOnly]="readonly"
+    [placeholder]="resolvedPlaceholder"
+    [min]="numberMin"
+    [max]="numberMax"
+    [step]="step"
+    [showSpinButtons]="false"
+    valueChangeEvent="input change"
+    [inputAttr]="inputAttributes"
+    (onInitialized)="captureEditor($any($event).component)"
+    (onValueChanged)="emitValue($event.value, $event.event)"
+  />
+} @else if (isDate) {
+  <dx-date-box
+    [value]="$any(dateValue)"
+    [type]="dateType"
+    [disabled]="disabled"
+    [readOnly]="readonly"
+    [placeholder]="resolvedPlaceholder"
+    [useMaskBehavior]="true"
+    [inputAttr]="inputAttributes"
+    (onInitialized)="captureEditor($any($event).component)"
+    (onValueChanged)="emitValue($event.value, $event.event)"
+  />
+} @else if (useAutocomplete) {
+  <dx-autocomplete
+    [value]="value == null ? '' : value.toString()"
+    [dataSource]="suggestions"
+    [disabled]="disabled"
+    [readOnly]="readonly"
+    [placeholder]="resolvedPlaceholder"
+    [maxLength]="maxLength || null"
+    valueChangeEvent="input change"
+    [inputAttr]="inputAttributes"
+    (onInitialized)="captureEditor($any($event).component)"
+    (onValueChanged)="emitValue($event.value, $event.event)"
+  />
+} @else {
+  <dx-text-box
+    [value]="value == null ? '' : value.toString()"
+    [mode]="textMode"
+    [disabled]="disabled"
+    [readOnly]="readonly"
+    [placeholder]="resolvedPlaceholder"
+    [maxLength]="maxLength || null"
+    valueChangeEvent="input change"
+    [inputAttr]="inputAttributes"
+    (onInitialized)="captureEditor($any($event).component)"
+    (onValueChanged)="emitValue($event.value, $event.event)"
+  >
+    @if (isPassword) {
+      <dxi-text-box-button
+        name="reveal"
+        location="after"
+        [options]="revealButtonOptions"
+      />
+    }
+  </dx-text-box>
+}
+@if (validationError()) {
+  <span class="control-error" role="alert">{{ validationError() }}</span>
+}

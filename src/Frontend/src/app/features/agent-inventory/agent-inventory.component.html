@@ -1,0 +1,404 @@
+<app-page
+  eyebrow="Machine details"
+  [title]="details()?.machine?.hostname || 'Machine inventory'"
+  subtitle="Hardware, installed software and agent health for this Windows computer."
+>
+  <ng-container page-actions>
+    <app-back-button text="Back to machines" (back)="backToMachines()" />
+    <dx-button
+      text="Refresh"
+      icon="refresh"
+      [disabled]="detailBusy()"
+      (onClick)="refresh()"
+    />
+  </ng-container>
+  @if (error()) {
+    <app-inline-alert tone="danger" heading="Inventory unavailable">{{
+      error()
+    }}</app-inline-alert>
+  }
+  <section
+    class="card detail"
+    aria-label="Machine inventory"
+    [attr.aria-busy]="detailBusy()"
+  >
+    @if (details(); as detail) {
+      <header>
+        <p>
+          Terminal {{ detail.machine.deviceId }} ·
+          {{ status(detail.machine, now()) }}
+        </p>
+        <div class="machine-actions">
+          <dx-button
+            [text]="updateBusy() ? 'Requesting…' : 'Update now'"
+            icon="refresh"
+            [disabled]="
+              updateBusy() ||
+              updatePending() ||
+              detailBusy() ||
+              !detail.machine.isActive ||
+              !supportsUpdates()
+            "
+            (onClick)="requestUpdate()"
+          />
+          <dx-button
+            [text]="collectBusy() ? 'Requesting…' : 'Collect now'"
+            icon="clock"
+            [disabled]="
+              collectBusy() ||
+              collectPending() ||
+              detailBusy() ||
+              !detail.machine.isActive ||
+              !supportsCollection()
+            "
+            (onClick)="requestCollect()"
+          />
+          <dx-button
+            [text]="pingBusy() ? 'Pinging…' : 'Ping machine'"
+            icon="globe"
+            [disabled]="pingBusy() || detailBusy() || !detail.machine.isActive"
+            (onClick)="ping()"
+          />
+          <dx-button
+            text="Download inventory"
+            icon="download"
+            [disabled]="detailBusy()"
+            (onClick)="exportInventory()"
+          />
+        </div>
+        <small role="status">{{ exportStatus() }}</small>
+      </header>
+      <section class="diagnostics" aria-label="Machine diagnostics">
+        <div
+          class="diagnostic-status"
+          aria-live="polite"
+          [attr.aria-busy]="pingBusy()"
+        >
+          <h3>Network connectivity</h3>
+          @if (pingBusy()) {
+            <p>Checking from the IAM server…</p>
+          } @else if (pingError()) {
+            <p class="diagnostic-warning" role="alert">{{ pingError() }}</p>
+          } @else if (pingResult(); as result) {
+            <p
+              class="ping-result"
+              [class.reachable]="result.status === 'reachable'"
+            >
+              {{ pingMessages[result.status] }}
+            </p>
+            @if (result.roundTripMilliseconds !== null) {
+              <strong>{{ result.roundTripMilliseconds }} ms round trip</strong>
+            }
+            <p class="collection-note">
+              {{ result.address ? result.address + " · " : "" }}Checked
+              {{ result.checkedAt | date: "medium" }}
+            </p>
+          } @else {
+            <p>Not checked. Use Ping machine for a live network check.</p>
+          }
+          <p class="collection-note">
+            ICMP ping checks network reachability from IAM, not whether the
+            agent service is running. Firewalls may block replies.
+          </p>
+        </div>
+        <div>
+          <h3>Agent reporting</h3>
+          <strong>{{ status(detail.machine, now()) }}</strong>
+          <p>
+            Last received:
+            {{
+              detail.machine.lastReportAt
+                ? (detail.machine.lastReportAt | date: "medium")
+                : "Not yet received"
+            }}
+          </p>
+          @if (collectError()) {
+            <p class="diagnostic-warning" role="alert">{{ collectError() }}</p>
+          }
+          @if (controlStatus()?.collect; as collect) {
+            <p>{{ collectMessages[collect.status] }}</p>
+            <p class="collection-note">
+              Requested {{ collect.requestedAt | date: "medium" }}
+            </p>
+          }
+          <p class="collection-note">
+            Running version {{ runningVersion() || "pending" }} · Inventory
+            reports every 30 minutes. Collect now asks for one immediately;
+            requests expire after 5 minutes.
+          </p>
+        </div>
+        <section
+          class="agent-updates"
+          aria-label="Agent connection and updates"
+          aria-live="polite"
+        >
+          <h3>Agent connection & updates</h3>
+          @if (controlError()) {
+            <p class="diagnostic-warning" role="alert">{{ controlError() }}</p>
+          }
+          @if (controlStatus(); as control) {
+            <strong [class.reachable]="agentOnline()">{{
+              detail.machine.isActive
+                ? agentOnline()
+                  ? "Agent online"
+                  : "No recent agent heartbeat"
+                : "Agent revoked"
+            }}</strong>
+            <p>
+              Last heartbeat:
+              {{
+                control.lastSeenAt
+                  ? (control.lastSeenAt | date: "medium")
+                  : "Not received"
+              }}
+            </p>
+            <p>
+              Worker
+              {{
+                control.agentVersion || detail.machine.agentVersion || "pending"
+              }}
+              · Supervisor {{ control.supervisorVersion || "not reported" }}
+            </p>
+            @if (control.update; as update) {
+              <p class="update-result">
+                <strong>{{ updateMessages[update.status] }}</strong>
+              </p>
+              <p class="collection-note">
+                Requested {{ update.requestedAt | date: "medium"
+                }}{{
+                  update.agentVersion ? " · Version " + update.agentVersion : ""
+                }}
+              </p>
+            }
+            @if (!supportsUpdates()) {
+              <p class="diagnostic-warning">
+                Immediate updates require a one-time supervisor upgrade to 1.0.1
+                or later. Existing automatic hourly signed update checks
+                continue.
+              </p>
+            }
+          }
+          @if (updateError()) {
+            <p class="diagnostic-warning" role="alert">{{ updateError() }}</p>
+          }
+          <p class="collection-note">
+            Update now requests the latest signed worker release through the
+            agent's outbound IAM connection (normally within 20 seconds).
+            Offline requests expire after 15 minutes. The worker may briefly
+            reconnect; Windows is not restarted. Supervisor upgrades require a
+            local administrator.
+          </p>
+        </section>
+      </section>
+      @if (!detail.machine.isTrusted) {
+        <p class="diagnostic-warning" role="status">
+          Terminal trust is inactive. Review this device under Security before
+          using it for terminal sign-in.
+        </p>
+      } @else if (trustExpiring(detail.machine, now())) {
+        <p class="diagnostic-warning" role="status">
+          Terminal trust expires
+          {{ detail.machine.trustedUntil | date: "medium" }}. Review renewal
+          under Security.
+        </p>
+      }
+      @if (detail.inventory; as inventory) {
+        <section class="windows-users" aria-label="Windows users">
+          <h3>Windows users</h3>
+          <p>
+            At last inventory:
+            {{ inventory.capturedAt | date: "dd MMM yyyy, HH:mm" }}. Profiles
+            are not proof of a current login.
+          </p>
+          @if (inventory.windowsUsers; as users) {
+            <p>
+              <strong>Current Windows user:</strong>
+              {{
+                users.currentUserName ||
+                  (users.sessionsReported
+                    ? "No single active user"
+                    : "Not reported")
+              }}
+            </p>
+            <div class="windows-user-columns">
+              <div>
+                @if (!users.sessionsReported) {
+                  <p>Some sessions could not be reported.</p>
+                }
+                <app-data-grid
+                  flush
+                  density="compact"
+                  heading="Signed-in sessions"
+                  ariaLabel="Signed-in sessions"
+                  [count]="users.sessions.length"
+                  [rows]="users.sessions"
+                  [columns]="sessionColumns"
+                  keyExpr="sessionId"
+                  sortable
+                  searchMode="client"
+                  searchPlaceholder="Search sessions"
+                  [chooser]="false"
+                  [emptyText]="
+                    users.sessionsReported
+                      ? 'No signed-in sessions.'
+                      : 'Not reported.'
+                  "
+                />
+              </div>
+              <div>
+                @if (!users.profilesReported) {
+                  <p>Some profiles could not be reported.</p>
+                }
+                <!-- A machine reports dozens of profiles, most of them service accounts, so this
+                     needs the same search, sort and filter as any other table. -->
+                <app-data-grid
+                  flush
+                  density="compact"
+                  heading="Local user profiles"
+                  ariaLabel="Local user profiles"
+                  [count]="users.profiles.length"
+                  [rows]="users.profiles"
+                  [columns]="profileColumns"
+                  keyExpr="sid"
+                  sortable
+                  searchMode="client"
+                  searchPlaceholder="Search profiles"
+                  [pageSize]="10"
+                  [emptyText]="
+                    users.profilesReported
+                      ? 'No user profiles.'
+                      : 'Not reported.'
+                  "
+                >
+                  <span *appGridCell="'profileLoaded'; let cell" class="chip">{{
+                    cell.value ? "Loaded" : "Not loaded"
+                  }}</span>
+                </app-data-grid>
+              </div>
+            </div>
+          } @else {
+            <p>
+              Not reported. Update the Windows agent and wait for its next
+              inventory report.
+            </p>
+          }
+        </section>
+        <h3>Hardware overview</h3>
+        <div class="hardware">
+          <div>
+            <span>Operating system</span
+            ><strong>{{ inventory.os }} · {{ inventory.architecture }}</strong>
+          </div>
+          <div>
+            <span
+              ><i class="dx-icon dx-icon-box" aria-hidden="true"></i
+              >Manufacturer / model</span
+            ><strong
+              >{{ inventory.hardware.manufacturer || "Unavailable" }} ·
+              {{ inventory.hardware.model || "Unavailable" }}</strong
+            >
+          </div>
+          <div>
+            <span
+              ><i class="dx-icon dx-icon-tags" aria-hidden="true"></i>Serial
+              number</span
+            ><strong>{{
+              inventory.hardware.serialNumber || "Unavailable"
+            }}</strong>
+          </div>
+          <div>
+            <span>Processor</span
+            ><strong
+              >{{ inventory.hardware.cpu || "Unavailable" }} ·
+              {{ inventory.hardware.logicalProcessors }} logical
+              processors</strong
+            >
+          </div>
+          <div>
+            <span
+              ><i class="dx-icon dx-icon-datausage" aria-hidden="true"></i
+              >Memory</span
+            ><strong
+              >{{
+                inventory.hardware.memoryBytes / 1073741824 | number: "1.0-1"
+              }}
+              GiB</strong
+            >
+          </div>
+          <div>
+            <span
+              ><i class="dx-icon dx-icon-event" aria-hidden="true"></i>Inventory
+              captured</span
+            ><strong>{{ inventory.capturedAt | date: "medium" }}</strong>
+          </div>
+          @if (inventory.diagnostics; as diagnostics) {
+            <div>
+              <span
+                ><i class="dx-icon dx-icon-clock" aria-hidden="true"></i>System
+                uptime at inventory capture</span
+              ><strong>{{
+                uptimeLabel(diagnostics.systemUptimeSeconds)
+              }}</strong>
+            </div>
+            <div>
+              <span
+                ><i class="dx-icon dx-icon-clock" aria-hidden="true"></i>Agent
+                uptime at inventory capture</span
+              ><strong>{{
+                uptimeLabel(diagnostics.agentUptimeSeconds)
+              }}</strong>
+            </div>
+          } @else {
+            <div>
+              <span
+                ><i class="dx-icon dx-icon-clock" aria-hidden="true"></i>Uptime
+                diagnostics</span
+              ><strong>Available after IAM.Agent 1.0.1 reports</strong>
+            </div>
+          }
+        </div>
+        <h3>Storage</h3>
+        @for (disk of inventory.hardware.disks; track disk.name) {
+          <div class="disk" [class.low-space]="diskSpaceLow(disk)">
+            <p>
+              {{ disk.name }} —
+              {{ disk.freeBytes / 1073741824 | number: "1.0-1" }} GiB free /
+              {{ disk.totalBytes / 1073741824 | number: "1.0-1" }} GiB total
+            </p>
+            @if (disk.totalBytes > 0) {
+              <progress
+                max="100"
+                [value]="diskUsedPercent(disk)"
+                [attr.aria-label]="disk.name + ' storage used'"
+              ></progress>
+              <span>{{ diskUsedPercent(disk) | number: "1.0-1" }}% used</span>
+            }
+            @if (diskSpaceLow(disk)) {
+              <strong class="diagnostic-warning"
+                >Low disk space — below 10% or 10 GiB free.</strong
+              >
+            }
+          </div>
+        }
+        <h3>
+          Installed software
+          <span class="count">{{ inventory.software.length }}</span>
+        </h3>
+        <app-installed-software-grid [software]="inventory.software" />
+        @for (warning of inventory.collectionWarnings; track warning) {
+          <p class="collection-note">{{ warning }}</p>
+        }
+      } @else {
+        <p>
+          Enrolled successfully. Waiting for the first signed hardware and
+          software report.
+        </p>
+      }
+    } @else {
+      <h2>{{ detailBusy() ? "Loading inventory…" : "Machine unavailable" }}</h2>
+      <p>
+        Use Back to machines to choose another machine, or retry with Refresh.
+      </p>
+    }
+  </section>
+</app-page>
