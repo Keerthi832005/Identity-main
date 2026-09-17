@@ -8,6 +8,27 @@ namespace Identity.Infrastructure.Tests;
 public sealed class TerminalAccessTokenTests
 {
     [Fact]
+    public void IssuesApplicationRoleClaimsWithoutGrantingCapabilities()
+    {
+        using var rsa = RSA.Create(2048);
+        using var services = new ServiceCollection().AddIdentitySecurity(
+            new JwtSigningOptions("https://identity.test", "fixture", rsa.ExportPkcs8PrivateKeyPem())).BuildServiceProvider();
+        var issuer = services.GetRequiredService<IAccessTokenIssuer>();
+        var now = DateTime.UtcNow;
+        var request = new AccessTokenRequest(42, "EMP42", "Employee", 8, "ams-api", "ams-web", 1, 1,
+            ["asset.view"], now, now.AddMinutes(15))
+        {
+            RoleCodes = ["employee", "approver", "employee"],
+        };
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(issuer.Issue(request).Token);
+        Assert.Equal(["employee", "approver"], token.Claims.Where(claim => claim.Type == "application_role").Select(claim => claim.Value));
+        Assert.Equal(["asset.view"], token.Claims.Where(claim => claim.Type == "capability").Select(claim => claim.Value));
+        var noRoles = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(
+            issuer.Issue(request with { RoleCodes = [] }).Token);
+        Assert.DoesNotContain(noRoles.Claims, claim => claim.Type == "application_role");
+    }
+
+    [Fact]
     public void ValidatesSignatureIssuerAudienceLifetimeAndRequiredClaims()
     {
         using var rsa = RSA.Create(2048);
