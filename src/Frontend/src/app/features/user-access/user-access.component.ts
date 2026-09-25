@@ -598,6 +598,8 @@ export class UserAccessComponent implements OnInit, OnDestroy {
       if (mode === "user") {
         if (!this.code().trim() || !this.name().trim())
           throw new Error("Employee code and display name are required.");
+        if (!(this.organizationMapping().branchId! > 0))
+          throw new Error("Select a branch before creating a user.");
         const request: CreateUserRequest = {
           employeeCode: this.code().trim(),
           displayName: this.name().trim(),

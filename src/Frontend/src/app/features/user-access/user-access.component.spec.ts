@@ -106,6 +106,20 @@ describe("UserAccessComponent profiles", () => {
     page["directory"].id.set(7);
     return page;
   }
+  it("requires a branch before creating a user", async () => {
+    const page = component();
+    page["open"]("user");
+    page["code"].set("NEW-1");
+    page["name"].set("New employee");
+    await page["submit"]();
+    expect(service.createUser).not.toHaveBeenCalled();
+    expect(page["error"]()).toContain("Select a branch");
+    page["organizationMapping"].set({ departmentId: null, teamId: null, branchId: 5491 });
+    await page["submit"]();
+    expect(service.createUser).toHaveBeenCalledWith(expect.objectContaining({
+      organizationMapping: { departmentId: null, teamId: null, branchId: 5491 },
+    }));
+  });
   it("renders profile email and manager controls with their current values", async () => {
     const fixture = TestBed.createComponent(UserAccessComponent);
     fixture.detectChanges();

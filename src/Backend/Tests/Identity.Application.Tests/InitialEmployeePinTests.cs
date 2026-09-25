@@ -45,8 +45,8 @@ public sealed class InitialEmployeePinTests
         var handler = new AdministrationCommandHandler(store,
             Stub<IAdministrationAuthorizer>((_, _) => ValueTask.CompletedTask),
             Stub<IUnitOfWork>((_, _) => Task.FromResult(1)), transactions, TimeProvider.System,
-            Stub<IOrganizationStore>((method, _) => throw new InvalidOperationException(method.Name)), pins);
-        var result = await handler.Handle(new CreateUserCommand(code, "Test employee", new AdministrationContext(null, Guid.NewGuid())), TestContext.Current.CancellationToken);
+            BranchStore(), pins);
+        var result = await handler.Handle(new CreateUserCommand(code, "Test employee", new AdministrationContext(null, Guid.NewGuid()), OrganizationMapping: new(null, null, 5)), TestContext.Current.CancellationToken);
         Assert.Equal(42, result.ResourceId);
         Assert.Equal(1, transactions.Calls);
         var credentials = added.OfType<UserCredential>().ToArray();
@@ -59,6 +59,47 @@ public sealed class InitialEmployeePinTests
             Assert.Equal(32, pin.SecretHash.Length);
             Assert.Null(pin.RevokedAt);
         }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(0L)]
+    [InlineData(-1L)]
+    public async Task Creation_RejectsMissingOrInvalidBranchBeforeWriting(long? branchId)
+    {
+        var handler = new AdministrationCommandHandler(
+            Stub<IAdministrationStore>((_, _) => throw new Exception("Must not write")),
+            Stub<IAdministrationAuthorizer>((_, _) => ValueTask.CompletedTask),
+            Stub<IUnitOfWork>((_, _) => throw new Exception("Must not save")),
+            new Transactions(), TimeProvider.System, BranchStore(),
+            Stub<IPinHasher>((_, _) => throw new Exception("Must not hash")));
+        var request = new CreateUserCommand("EMP1234", "Employee", new(null, Guid.NewGuid()),
+            OrganizationMapping: branchId.HasValue ? new(null, null, branchId) : null);
+        var error = await Assert.ThrowsAsync<AdministrationException>(async () =>
+            await handler.Handle(request, TestContext.Current.CancellationToken));
+        Assert.Contains("Select a branch", error.Message);
+    }
+
+    private static IOrganizationStore BranchStore()
+    {
+        var units = new List<OrganizationUnit>();
+        var unit = OrganizationUnit.CreateRoot(1, "ORG", "Organization", DateTime.UtcNow);
+        unit.GetType().GetProperty("OrganizationUnitId")!.SetValue(unit, 1L);
+        units.Add(unit);
+        foreach (var type in new[] { Identity.Domain.Enums.OrganizationUnitType.Country,
+            Identity.Domain.Enums.OrganizationUnitType.Region, Identity.Domain.Enums.OrganizationUnitType.State,
+            Identity.Domain.Enums.OrganizationUnitType.Branch })
+        {
+            unit = OrganizationUnit.CreateChild(1, unit, type, type.ToString(), type.ToString(), DateTime.UtcNow);
+            unit.GetType().GetProperty("OrganizationUnitId")!.SetValue(unit, (long)units.Count + 1);
+            units.Add(unit);
+        }
+        return Stub<IOrganizationStore>((method, args) => method.Name switch
+        {
+            "FindUnit" => ValueTask.FromResult<OrganizationUnit?>(units.Single(x => x.OrganizationUnitId == (long)args[0]!)),
+            "LockOrganization" => Task.CompletedTask,
+            _ => throw new InvalidOperationException(method.Name)
+        });
     }
 
     private sealed class Transactions : ITransactionRunner

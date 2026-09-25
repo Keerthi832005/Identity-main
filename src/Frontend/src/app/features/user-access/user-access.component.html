@@ -843,6 +843,7 @@
       </label>
       <app-user-organization-mapping
         [initialMapping]="organizationMapping()"
+        [branchRequired]="mode === 'user'"
         [departmentName]="profileUser()?.departmentName ?? null"
         [teamName]="profileUser()?.teamName ?? null"
         [branchName]="profileUser()?.branchName ?? null"

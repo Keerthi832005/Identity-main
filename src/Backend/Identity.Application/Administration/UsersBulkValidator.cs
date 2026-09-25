@@ -11,6 +11,7 @@ public sealed class UsersBulkValidator(IUserCodeResolver resolver, IOrganization
     public const string UnknownManager = "manager.unknown";
     public const string ManagerIsSelf = "manager.self";
     public const string EmailInvalid = "email.invalid";
+    public const string BranchRequired = "branch.required";
     public const string UnknownBranch = "branch.unknown";
     public const string WrongBranchType = "branch.wrong-type";
 
@@ -86,6 +87,10 @@ public sealed class UsersBulkValidator(IUserCodeResolver resolver, IOrganization
                     EmailInvalid,
                     $"'{email}' is not a valid email address."));
             }
+
+            if (branchCode is null && employeeCode is not null && !existing.ContainsKey(employeeCode))
+                errors.Add(new BulkCellError(row.SourceRowNumber, UsersBulkDescriptor.BranchCode,
+                    BranchRequired, "Branch code is required for a new user."));
 
             if (branchCode is not null)
             {

@@ -61,11 +61,11 @@ public static class UsersBulkDescriptor
                 BulkColumnType.Text,
                 Required: false,
                 WidthInCharacters: 20,
-                HelpText: "Optional employee branch. State, region and country are derived automatically.",
+                HelpText: "Required for new users; leave blank to preserve the branch of existing users. State, region and country are derived automatically.",
                 ReferenceListKey: "organization-units",
                 MaxLength: 50),
         ],
         "One user per row. Employee code and display name are required. "
-        + "Branch is optional. Passwords, PINs and MFA are never set here.",
+        + "Branch is required for new users; blank preserves existing assignments on updates. Passwords, PINs and MFA are never set here.",
         KeyColumnIds: [EmployeeCode]);
 }

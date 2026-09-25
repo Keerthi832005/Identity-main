@@ -74,6 +74,8 @@ public sealed class AdministrationCommandHandler(
         CancellationToken cancellationToken) => Run(request.Context, AdministrationAction.CreateUser, async token =>
     {
         var now = UtcNow();
+        if (request.OrganizationMapping?.BranchId is not > 0)
+            throw new AdministrationException("Select a branch before creating a user.");
         var user = UserAccount.Create(request.EmployeeCode, request.DisplayName, now, request.Email, request.ManagerUserId);
         if (request.ManagerUserId.HasValue)
         {

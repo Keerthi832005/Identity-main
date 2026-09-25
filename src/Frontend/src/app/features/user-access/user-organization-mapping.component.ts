@@ -77,6 +77,7 @@ export class UserOrganizationMappingComponent implements OnInit {
   @Input() countryId: number | null = null;
   @Input() countryName: string | null = null;
   @Input() disabled = false;
+  @Input() branchRequired = false;
   @Output() readonly mappingChange =
     new EventEmitter<UserOrganizationMapping>();
   protected readonly departmentId = signal<number | null>(null);

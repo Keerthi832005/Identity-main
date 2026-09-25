@@ -9,10 +9,20 @@ public sealed class UsersBulkValidatorTests
     private static readonly BulkEntityDescriptor Descriptor = UsersBulkDescriptor.Descriptor;
 
     private static BulkRow Row(int number, params (string Column, string? Value)[] cells) =>
-        new(number, [.. cells.Select(cell => new BulkCell(cell.Column, cell.Value, cell.Value, false))]);
+        new(number, [.. cells.Select(cell => new BulkCell(cell.Column, cell.Value, cell.Value, false)),
+            .. (cells.Any(cell => cell.Column == "branchCode") ? Array.Empty<BulkCell>() :
+                new[] { new BulkCell("branchCode", "BR-CHENNAI", "BR-CHENNAI", false) })]);
 
     private static UsersBulkValidator Validator(params string[] existingCodes) =>
-        new(new StubStore(existingCodes), new StubOrganizations());
+        new(new StubStore(existingCodes), new StubOrganizations(("BR-CHENNAI", OrganizationUnitType.Branch)));
+
+    [Fact]
+    public async Task NewUserRequiresBranch()
+    {
+        var rows = new[] { Row(3, ("employeeCode", "NEW"), ("branchCode", " ")) };
+        var verdicts = await Validator().Verify(Descriptor, rows, TestContext.Current.CancellationToken);
+        Assert.Equal(UsersBulkValidator.BranchRequired, Assert.Single(verdicts[0].Errors).Code);
+    }
 
     [Fact]
     public async Task ValidBranchCodePasses()
@@ -43,7 +53,7 @@ public sealed class UsersBulkValidatorTests
     [Fact]
     public async Task ExistingEmployeeCodeIsClassifiedAsAnUpdate()
     {
-        var rows = new[] { Row(3, ("employeeCode", "ADMIN-001"), ("displayName", "Admin")) };
+        var rows = new[] { Row(3, ("employeeCode", "ADMIN-001"), ("displayName", "Admin"), ("branchCode", null)) };
 
         var verdicts = await Validator("ADMIN-001")
             .Verify(Descriptor, rows, TestContext.Current.CancellationToken);

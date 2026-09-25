@@ -1,9 +1,9 @@
 <div class="mapping-fields">
   <label
-    ><span>Branch (optional)</span>
+    ><span>{{ branchRequired ? "Branch *" : "Branch (optional)" }}</span>
     <app-lookup
       ariaLabel="Branch"
-      emptyLabel="No branch"
+      [emptyLabel]="branchRequired ? 'Select a branch' : 'No branch'"
       [value]="branchId()"
       [selectedLabel]="selectedBranchName()"
       [searchOptions]="searchBranches"
