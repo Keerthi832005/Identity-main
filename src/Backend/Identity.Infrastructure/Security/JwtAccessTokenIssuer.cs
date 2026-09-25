@@ -82,6 +82,9 @@ internal sealed class JwtAccessTokenIssuer : IAccessTokenIssuer, ITerminalAccess
             new("authorization_version", request.AuthorizationVersion.ToString(CultureInfo.InvariantCulture)),
         };
         claims.AddRange(request.CapabilityCodes.Select(capability => new Claim("capability", capability)));
+        // Application-scoped role codes select client workspaces, not API permissions.
+        claims.AddRange(request.RoleCodes.Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(role => new Claim("application_role", role)));
         var token = new JwtSecurityToken(
             issuer,
             request.Audience,

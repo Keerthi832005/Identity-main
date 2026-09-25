@@ -50,7 +50,7 @@ internal sealed class SessionIssuer(
             authorization.AuthorizationVersion,
             authorization.CapabilityCodes,
             issuedAt,
-            accessExpiresAt));
+            accessExpiresAt) { RoleCodes = authorization.RoleCodes });
         return new IssuedSession(
             AuthenticationResult.Issued(
                 accessToken,

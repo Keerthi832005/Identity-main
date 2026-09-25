@@ -11,4 +11,7 @@ public sealed record AccessTokenRequest(
     int AuthorizationVersion,
     IReadOnlyList<string> CapabilityCodes,
     DateTime IssuedAt,
-    DateTime ExpiresAt);
+    DateTime ExpiresAt)
+{
+    public IReadOnlyList<string> RoleCodes { get; init; } = [];
+}

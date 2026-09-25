@@ -389,7 +389,17 @@ internal sealed class AdministrationStore(IdentityDbContext dbContext)
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        return new EffectiveAuthorization(access.AuthorizationVersion, effective);
+        var roleCodes = await (
+            from assignment in dbContext.UserRoles.AsNoTracking()
+            join role in dbContext.Roles on assignment.RoleId equals role.RoleId
+            where assignment.UserId == userId
+                && assignment.ApplicationId == applicationId
+                && assignment.RevokedAt == null
+                && role.ApplicationId == applicationId
+                && role.IsActive
+            select role.RoleCode).Distinct().ToListAsync(cancellationToken);
+
+        return new EffectiveAuthorization(access.AuthorizationVersion, effective) { RoleCodes = roleCodes };
     }
 
     public async Task InvalidateRoleUsers(
