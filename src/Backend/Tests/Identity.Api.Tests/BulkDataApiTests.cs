@@ -35,6 +35,33 @@ public sealed class BulkDataApiTests(IdentityApiFactory factory) : IClassFixture
     ];
 
     [Fact]
+    public async Task BulkPasteAboveOrdinaryRequestLimitReachesStaging()
+    {
+        using var client = Administrator();
+        var rows = Enumerable.Range(1, 1664).Select(i => new BulkPasteRowRequest(i + 2,
+            new Dictionary<string, string?>
+            {
+                ["employeeCode"] = i.ToString("D5"),
+                ["displayName"] = $"Employee {i}",
+                ["branchCode"] = "BR-ASSET-005",
+            })).ToArray();
+        using var content = JsonContent.Create(new BulkPasteRequest(rows));
+        await content.LoadIntoBufferAsync(Token);
+        Assert.True(content.Headers.ContentLength > 64 * 1024);
+        using var response = await client.PostAsync("/api/v1/admin/bulk/users/staging", content, Token);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task BulkUploadAboveItsRequestLimitIsRejected()
+    {
+        using var client = Administrator();
+        using var content = new ByteArrayContent(new byte[9 * 1024 * 1024]);
+        using var response = await client.PostAsync("/api/v1/admin/bulk/users/staging", content, Token);
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+    }
+
+    [Fact]
     public async Task EveryRouteRequiresAnAuthenticatedAdministrator()
     {
         foreach (var (method, path) in Routes)
@@ -281,3 +308,4 @@ public sealed class BulkDataApiTests(IdentityApiFactory factory) : IClassFixture
         Assert.True((await response.Content.ReadAsByteArrayAsync(Token)).Length > 0);
     }
 }
+

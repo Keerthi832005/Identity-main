@@ -2,6 +2,8 @@ using Identity.Contracts.Errors;
 
 namespace Identity.Api.Hosting;
 
+internal sealed record RequestBodyLimit(long Bytes);
+
 internal sealed class RequestSizeLimitMiddleware(RequestDelegate next)
 {
     private const long MaximumRequestBodyBytes = 64 * 1024;
@@ -9,7 +11,8 @@ internal sealed class RequestSizeLimitMiddleware(RequestDelegate next)
     public async Task Invoke(HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var limit = context.Request.Path == "/api/v1/agents/report" ? 512 * 1024 : MaximumRequestBodyBytes;
+        var limit = context.GetEndpoint()?.Metadata.GetMetadata<RequestBodyLimit>()?.Bytes
+            ?? (context.Request.Path == "/api/v1/agents/report" ? 512 * 1024 : MaximumRequestBodyBytes);
         var feature = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
         if (feature is { IsReadOnly: false }) feature.MaxRequestBodySize = limit;
         if (context.Request.ContentLength > limit)

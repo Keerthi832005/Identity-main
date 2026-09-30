@@ -27,7 +27,10 @@ internal static class BulkDataEndpoints
 
         group.MapGet("/{entity}/template", Template);
         group.MapPost("/{entity}/export", Export);
-        group.MapPost("/{entity}/staging", Stage).DisableAntiforgery();
+        // Allow the supported workbook size plus multipart headers and boundaries.
+        group.MapPost("/{entity}/staging", Stage)
+            .WithMetadata(new RequestBodyLimit(BulkDocumentLimits.Default.MaxBytes + 64 * 1024))
+            .DisableAntiforgery();
         group.MapGet("/staging/{batchKey:guid}", GetBatch);
         group.MapPut("/staging/{batchKey:guid}/rows/{sourceRowNumber:int}", CorrectRow);
         group.MapGet("/staging/{batchKey:guid}/errors", Errors);
