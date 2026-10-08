@@ -97,6 +97,11 @@ app.MapAgentDistributionEndpoints();
 app.MapOrganizationEndpoints()
     .MapBulkDataEndpoints();
 app.MapOpenApi().AllowAnonymous();
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.File(Path.Combine(app.Environment.WebRootPath, "api-docs.html"), "text/html"))
+        .AllowAnonymous().ExcludeFromDescription();
+}
 
 app.Run();
 

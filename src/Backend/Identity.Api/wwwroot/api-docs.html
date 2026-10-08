@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>API explorer</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#183044;background:#f3f6fa}body{max-width:1150px;margin:40px auto;padding:0 24px}h1{font-size:32px;margin-bottom:8px}header p{color:#536878}a{color:#1261a0}input{box-sizing:border-box;width:100%;padding:14px;margin:20px 0;border:1px solid #b8c8d6;border-radius:8px;font:inherit}details{background:white;border:1px solid #d4dee7;border-radius:8px;margin:10px 0;overflow:hidden}summary{cursor:pointer;padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}summary:hover{background:#edf5ff}.method{font-weight:750;font-size:12px;background:#dfecff;color:#145ba0;padding:6px 9px;border-radius:4px;min-width:52px;text-align:center}.post{background:#dcf5e8;color:#12633b}.delete{background:#ffe1e1;color:#982424}.put,.patch{background:#fff0cb;color:#795500}code{overflow-wrap:anywhere}summary .name{color:#536878;font-size:14px}.content{padding:0 22px 22px;border-top:1px solid #e5ebf0}pre{background:#f4f7fa;padding:16px;overflow:auto;border-radius:6px;font-size:13px;max-height:500px}h2{font-size:19px;margin-top:28px}h3{font-size:16px}#status{color:#536878}table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #e5ebf0;padding:10px;vertical-align:top}footer{margin:30px 0;color:#536878;font-size:13px}
+label{display:block;margin-top:24px;font-weight:600}input{margin:8px 0 12px}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0}.toolbar button{background:white;color:#183044;border:1px solid #b8c8d6;border-radius:6px;padding:9px 14px;cursor:pointer}.toolbar span{font-size:13px;color:#536878;margin-left:auto}.group>summary:before{content:'›';font-size:22px;width:14px}.group[open]>summary:before{content:'⌄'}.group>summary .count{margin-left:auto;font-size:12px;font-weight:500;color:#536878;background:#edf2f7;border-radius:20px;padding:5px 10px}.group.module{margin:18px 0;border-left:4px solid #2563a0}.group.module>summary{padding:22px;font-size:20px;font-weight:700;background:#f8fbff}.group.topic>summary{font-size:16px;font-weight:650}.group.subtopic>summary{font-size:14px;font-weight:600;padding:12px 16px}.group-items{padding:0 18px 12px}.endpoint{border-radius:5px}.endpoint>summary{font-size:13px;padding:12px}.endpoint>summary:before{content:'+';font-weight:700}.endpoint[open]>summary:before{content:'−'}summary:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #3586dd;outline-offset:2px}@media(max-width:650px){body{padding:0 12px;margin:20px auto}.group-items{padding:0 8px 8px}.toolbar span{width:100%;margin-left:0}.group.module>summary{padding:16px;font-size:18px}}
+.token-panel{border-left:4px solid #16845a}.token-panel>summary{font-size:18px;font-weight:700}.token-panel form{max-width:600px}.token-panel button{padding:10px 16px;border:1px solid #b8c8d6;border-radius:6px;background:#185d99;color:white;cursor:pointer;margin:8px 8px 8px 0}.token-panel button:disabled{opacity:.55;cursor:wait}.token-panel textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #b8c8d6;border-radius:6px;overflow-wrap:anywhere}.token-panel [hidden]{display:none}
+</style></head><body><header><h1 id="title">API explorer</h1><p>Choose a module, then a topic and subtopic. Expand an endpoint for its request and response details.</p><a href="/openapi/v1.json">Download OpenAPI JSON</a> · <a href="/health/ready">API health</a></header><details class="token-panel"><summary>Generate access token</summary><div class="content">
+<p>Sign in with your IAM employee credentials. Complete MFA if requested. Copy the token for authorized API calls.</p>
+<form id="token-login"><label for="employee">Employee code</label><input id="employee" required autocomplete="username" maxlength="100">
+<label for="password">Password</label><input id="password" type="password" required autocomplete="off" maxlength="1024">
+<label for="client">Client ID</label><input id="client" required maxlength="150" value="identity-admin-web">
+<button type="submit" id="generate-token">Generate access token</button></form>
+<form id="token-mfa" hidden><label for="mfa-code">Six-digit MFA code</label><input id="mfa-code" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"><button type="submit">Verify MFA</button><button type="button" id="restart-login">Start again</button></form>
+<p id="token-status" role="status">Tokens are kept only in this page until cleared or reloaded.</p>
+<div id="token-result" hidden><label for="access-token">Access token</label><textarea id="access-token" readonly rows="5" spellcheck="false" autocomplete="off"></textarea><p id="token-expiry"></p><button type="button" id="copy-token">Copy token</button><button type="button" id="clear-token">Clear token</button></div>
+</div></details><label for="search">Search endpoints</label><input id="search" type="search" placeholder="Search by name, method, path or module…"><p id="status" role="status">Loading API definitions…</p><div class="toolbar"><button id="expand" type="button">Expand topics</button><button id="collapse" type="button">Collapse all</button><span>Module → Topic → Subtopic → Endpoint</span></div><main id="list"></main><footer>Expanding an endpoint does not execute it. The token form submits your credentials to IAM only when you select Generate access token or Verify MFA. Authentication and permissions still apply when calling APIs. Details reflect the server's OpenAPI metadata.</footer>
+<script>
+const list=document.querySelector('#list'),status=document.querySelector('#status'),search=document.querySelector('#search');
+const verbs=['get','post','put','patch','delete','head','options'];
+function el(tag,text,parent){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(parent)parent.append(node);return node;}
+function human(value){return (value||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[-_]/g,' ');}
+let spec,rows=[];
+function resolve(value,seen=new Set()){if(!value||typeof value!=='object')return value;if(value.$ref){const ref=value.$ref;if(seen.has(ref))return {$ref:ref};const next=new Set(seen);next.add(ref);if(ref.startsWith('#/')){const target=ref.slice(2).split('/').reduce((o,k)=>o?.[k.replace(/~1/g,'/').replace(/~0/g,'~')],spec);if(target)return resolve(target,next);}return value;}if(Array.isArray(value))return value.map(v=>resolve(v,seen));return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,resolve(v,seen)]));}
+function json(parent,value){el('pre',JSON.stringify(resolve(value),null,2),parent);}
+function renderEndpoint(row,parent){const {path,method,op,item}=row;const detail=el('details',undefined,parent);detail.className='endpoint';const summary=el('summary',undefined,detail);const badge=el('span',method.toUpperCase(),summary);badge.className='method '+method;el('code',path,summary);el('span',op.summary||human(op.operationId)||'',summary).className='name';detail.addEventListener('toggle',()=>{if(!detail.open||detail.dataset.loaded)return;detail.dataset.loaded='true';const body=el('div',undefined,detail);body.className='content';el('h2',op.summary||human(op.operationId)||method.toUpperCase()+' '+path,body);el('p',op.description||'No additional description has been provided by this endpoint.',body);if(op.tags?.length)el('p','API tags: '+op.tags.join(', '),body);if(op.operationId)el('p','Operation ID: '+op.operationId,body);if(op.deprecated)el('p','Deprecated endpoint',body);el('h3','Request URL',body);el('code',location.origin+path,body);if(path.includes('{'))el('p','Replace every {parameter} in this URL with an actual record value before sending. Values in braces are placeholders.',body);const parameters=[...(item.parameters||[]),...(op.parameters||[])];el('h3','Parameters',body);if(parameters.length)json(body,parameters);else el('p','No path, query or header parameters are documented.',body);if(op.requestBody){el('h3','Request body',body);el('p','In Postman select Body → raw → JSON and send a JSON object matching the schema below. This schema is documentation, not the body to paste.',body);if(op.operationId==='CompleteTransfer'){el('h3','Body example (no linked movement)',body);el('pre',JSON.stringify({movementId:null},null,2),body);el('p','This action completes an approved transfer and changes asset records. Use the ID of the transfer you intend to complete.',body);}json(body,op.requestBody);}el('h3','Responses',body);for(const [code,response] of Object.entries(op.responses||{})){el('h3','HTTP '+code,body);json(body,response);}el('h3','Authentication',body);if(op.security||spec.security)json(body,op.security||spec.security);else el('p','Authentication requirements are not specified in this OpenAPI document. Protected endpoints still require valid credentials and permissions.',body);});}
+const labels={auth:'Authentication',admin:'Administration',agents:'Agents',assets:'Assets',allocations:'Allocations',movements:'Movements',transfers:'Transfers',identity:'Identity & access',organization:'Organization',reports:'Reports & dashboards','service-desk':'Service desk','service-level':'Service levels',notifications:'Notifications',contracts:'Contracts',verification:'Verification & audits',discovery:'Device discovery',me:'My profile',mine:'My records',mfa:'Multi-factor authentication',it:'IT assets',chq:'CHQ',bulk:'Bulk data',types:'Asset types',classes:'Asset classes',statuses:'Asset statuses','sla-policies':'SLA policies','it-requests':'IT requests','my-it-requests':'My IT requests','chq-shipments':'CHQ shipments','it-shipments':'IT shipments','grn-queue':'GRN queue'};
+function label(key){return labels[key]||human(key).replace(/\b\w/g,c=>c.toUpperCase()).replace(/\bIt\b/g,'IT').replace(/\bChq\b/g,'CHQ').replace(/\bIam\b/g,'IAM').replace(/\bSla\b/g,'SLA');}
+function classify(path){
+  const parts=path.split('/').filter(Boolean);
+  if(parts[0]==='health')return ['System health','Health checks',label(parts[1])];
+  if(parts[0]==='.well-known')return ['Discovery & signing keys','Public configuration','Metadata'];
+  if(parts[0]==='install.ps1')return ['Agents','Installation & distribution','Installer'];
+  const module=parts[2]||'other',tail=parts.slice(3).filter(p=>!p.startsWith('{'));
+  const defaults={assets:'Asset register',allocations:'Allocation register',movements:'Movement register',transfers:'Transfer requests',contracts:'Contract register',agents:'Agent operations'};
+  let topic=tail[0]?label(tail[0]):(defaults[module]||'Overview');
+  let subtopic=tail.length>1?tail.slice(1).map(label).join(' / '):'Overview & management';
+  // Actions on a specific record belong beside that module's register.
+  if(parts[3]?.startsWith('{')){topic=defaults[module]||'Records';subtopic=tail.length?tail.map(label).join(' / '):'Record details';}
+  if(module==='auth'&&!['browser','terminal'].includes(tail[0])){topic='Application authentication';subtopic=tail.length?tail.map(label).join(' / '):'Overview';}
+  return [label(module),topic,subtopic];
+}
+function groupRows(parent,items,depth,open){
+  const groups=new Map();
+  for(const row of items){const key=row.groups[depth];if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
+  for(const [name,children] of [...groups].sort(([a],[b])=>a.localeCompare(b))){
+    const group=el('details',undefined,parent);group.className='group '+['module','topic','subtopic'][depth];group.open=open;
+    const summary=el('summary',undefined,group);el('span',name,summary);el('span',children.length+' endpoint'+(children.length===1?'':'s'),summary).className='count';
+    const body=el('div',undefined,group);body.className='group-items';
+    if(depth<2)groupRows(body,children,depth+1,open);else for(const row of children)renderEndpoint(row,body);
+  }
+}
+function render(){
+  const q=search.value.toLowerCase().trim();list.replaceChildren();
+  for(const row of rows){row.groups=classify(row.path);}
+  const matches=rows.filter(row=>(row.search+' '+row.groups.join(' ').toLowerCase()).includes(q));
+  groupRows(list,matches,0,Boolean(q));
+  const modules=new Set(matches.map(row=>row.groups[0])).size;
+  status.textContent=matches.length+' of '+rows.length+' endpoints · '+modules+' modules'+(matches.length?' — browse by topic below.':' — no matching endpoints.');
+}
+document.querySelector('#expand').addEventListener('click',()=>list.querySelectorAll('.group').forEach(group=>group.open=true));
+document.querySelector('#collapse').addEventListener('click',()=>list.querySelectorAll('details').forEach(group=>group.open=false));
+search.addEventListener('input',render);
+fetch('/openapi/v1.json').then(async response=>{if(!response.ok)throw new Error('OpenAPI returned HTTP '+response.status);return response.json();}).then(data=>{spec=data;const title=(spec.info?.title||'API')+' — API explorer';document.title=title;document.querySelector('#title').textContent=title;for(const [path,item] of Object.entries(spec.paths||{})){for(const method of verbs){const op=item[method];if(op)rows.push({path,method,op,item,search:[path,method,op.summary,op.description,op.operationId,...(op.tags||[])].join(' ').toLowerCase()});}}rows.sort((a,b)=>a.path.localeCompare(b.path)||a.method.localeCompare(b.method));render();}).catch(error=>{status.textContent='Unable to load the API list: '+error.message+'. Reload to retry.';});
+const loginForm=document.querySelector('#token-login'),mfaForm=document.querySelector('#token-mfa'),tokenStatus=document.querySelector('#token-status'),tokenResult=document.querySelector('#token-result'),tokenField=document.querySelector('#access-token');
+let challengeId=null,tokenExpiryTimer=null;
+const authBase='/api/v1/auth/browser/';
+function clearToken(){clearTimeout(tokenExpiryTimer);tokenField.value='';tokenResult.hidden=true;document.querySelector('#token-expiry').textContent='';}
+function resetLogin(){clearToken();challengeId=null;loginForm.reset();mfaForm.reset();loginForm.hidden=false;mfaForm.hidden=true;tokenStatus.textContent='Tokens are kept only in this page until cleared or reloaded.';}
+async function authenticate(operation,payload){
+  const buttons=document.querySelectorAll('.token-panel button');buttons.forEach(button=>button.disabled=true);
+  tokenStatus.textContent='Signing in…';
+  try{
+    const response=await fetch(authBase+operation,{method:'POST',headers:{'Content-Type':'application/json','X-Identity-Session':'browser'},credentials:'omit',cache:'no-store',body:JSON.stringify(payload),signal:AbortSignal.timeout(25000)});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.failureCode||data.detail||data.title||'Sign-in failed (HTTP '+response.status+').');
+    if(data.mfaChallengeId){challengeId=data.mfaChallengeId;loginForm.hidden=true;mfaForm.hidden=false;tokenStatus.textContent='MFA is required. Enter your six-digit code.';document.querySelector('#mfa-code').focus();return;}
+    if(!data.succeeded||!data.accessToken)throw new Error(data.failureCode||'Sign-in did not return an access token.');
+    challengeId=null;mfaForm.hidden=true;loginForm.hidden=false;tokenField.value=data.accessToken;tokenResult.hidden=false;
+    const expiry=Date.parse(data.accessTokenExpiresAt);
+    document.querySelector('#token-expiry').textContent=Number.isFinite(expiry)?'Expires: '+new Date(expiry).toLocaleString():'';
+    tokenStatus.textContent='Access token generated. Copy it for use as a Bearer token. Account permissions and password-change requirements still apply.';
+    if(Number.isFinite(expiry))tokenExpiryTimer=setTimeout(()=>{clearToken();tokenStatus.textContent='Token expired. Sign in to generate another.';},Math.max(0,Math.min(expiry-Date.now(),2147483647)));
+  }catch(error){tokenStatus.textContent=error.name==='TimeoutError'?'Sign-in timed out. Try again.':error.message;}
+  finally{document.querySelector('#password').value='';document.querySelector('#mfa-code').value='';buttons.forEach(button=>button.disabled=false);}
+}
+loginForm.addEventListener('submit',event=>{event.preventDefault();clearToken();challengeId=null;authenticate('login',{employeeCode:document.querySelector('#employee').value.trim(),password:document.querySelector('#password').value,clientId:document.querySelector('#client').value.trim(),clientSecret:null,deviceId:null});});
+mfaForm.addEventListener('submit',event=>{event.preventDefault();if(challengeId)authenticate('mfa/complete',{mfaChallengeId:challengeId,code:document.querySelector('#mfa-code').value.trim()});});
+document.querySelector('#restart-login').addEventListener('click',resetLogin);
+document.querySelector('#clear-token').addEventListener('click',resetLogin);
+document.querySelector('#copy-token').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(tokenField.value);tokenStatus.textContent='Access token copied.';}catch{tokenField.focus();tokenField.select();tokenStatus.textContent='Select and copy the token with Ctrl+C.';}});
+window.addEventListener('pagehide',resetLogin);
+</script></body></html>
