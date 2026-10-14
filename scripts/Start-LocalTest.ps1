@@ -4,9 +4,9 @@ if (-not $IsWindows) { throw 'Run with PowerShell 7 on Windows.' }
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $stateDirectory = Join-Path $projectRoot 'artifacts/local-test'
 $secretFile = Join-Path $stateDirectory 'secrets.clixml'
-$sqlServer = 'lpc:.\SQLEXPRESS2022'
+$sqlServer = 'lpc:.\SQLEXPRESS2025'
 $databaseName = 'IAM_LocalTest'
-$connection = 'Server=lpc:.\SQLEXPRESS2022;Database=IAM_LocalTest;Integrated Security=True;Encrypt=False;Connect Timeout=10'
+$connection = 'Server=lpc:.\SQLEXPRESS2025;Database=IAM_LocalTest;Integrated Security=True;Encrypt=False;Connect Timeout=10'
 $databaseDll = Join-Path $projectRoot 'src/Backend/Identity.Database/bin/Debug/net10.0/Identity.Database.dll'
 $adminDll = Join-Path $projectRoot 'src/Backend/Identity.AdminCli/bin/Debug/net10.0/Identity.AdminCli.dll'
 function Invoke-CheckedDotnet([string[]]$Arguments) {
