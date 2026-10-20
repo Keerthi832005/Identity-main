@@ -85,7 +85,7 @@ dotnet run --project src/Backend/Identity.AdminCli/Identity.AdminCli.csproj -- b
   --client-id identity-administration-client
 ```
 
-The command creates the administration application, confidential client, initial user, `iam.admin` capability, role assignment, role permission, and password. Its JSON output contains only resource identifiers. Remove the two bootstrap secret environment variables after use.
+The command creates the administration application, confidential client, initial user, `iam.admin` capability, role assignment, role permission, and password in one transaction. The CLI holds an exclusive bootstrap lock and rejects databases with existing users or applications. Its trusted first-administrator path permits a missing branch because organization masters may not exist yet; ordinary user creation still requires a branch. Initial numeric employee PIN behavior and user-creation auditing are preserved. A failure rolls back the entire bootstrap, including the administration application. Its JSON output contains only resource identifiers. Remove the two bootstrap secret environment variables after use.
 
 After migration 0008, the optional `--email` switch stores the initial administrator's contact email. Bootstrap leaves `ManagerUserId` null. Existing users' email and reporting manager can be managed through **Users & access → Edit profile** or the authorized profile API; see [User Email and Manager](User-Email-And-Manager.md). Email does not replace employee-code login or enable email recovery.
 

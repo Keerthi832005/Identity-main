@@ -55,6 +55,7 @@ public sealed class DefaultAdministratorSeedTests
         services.AddScoped<ApplicationProvisioningRunner>();
         services.AddScoped<AdministrationWebProvisioningRunner>();
         services.AddScoped<DefaultAdministratorSeedRunner>();
+        services.AddScoped<IBootstrapSession, BootstrapSession>();
         services.AddScoped<BootstrapRunner>();
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();

@@ -89,6 +89,7 @@ public static class AdminCliHost
                 var value = LoadSecrets();
                 return new SecurityProtectionOptions(value.SecurityKeyId, value.EncryptionKey, value.ChallengeKey, value.IdentifierHashKey);
             });
+            services.AddScoped<IBootstrapSession, BootstrapSession>();
             services.AddScoped<BootstrapRunner>();
             services.AddScoped<ApplicationProvisioningRunner>();
             services.AddScoped<AdministrationWebProvisioningRunner>();
@@ -228,6 +229,7 @@ public static class AdminCliHost
                     secrets.EncryptionKey,
                     secrets.ChallengeKey,
                     secrets.IdentifierHashKey));
+            services.AddScoped<IBootstrapSession, BootstrapSession>();
             services.AddScoped<BootstrapRunner>();
             await using var provider = services.BuildServiceProvider();
             await using var scope = provider.CreateAsyncScope();

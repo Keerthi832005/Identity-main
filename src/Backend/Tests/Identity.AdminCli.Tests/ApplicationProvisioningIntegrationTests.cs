@@ -37,11 +37,13 @@ public sealed class ApplicationProvisioningIntegrationTests
             "iam.admin",
             rsa.ExportPkcs8PrivateKeyPem());
         bootstrapServices.AddSingleton<IAdministrationAuthorizer, AllowAdministrationAuthorizer>();
+        bootstrapServices.AddScoped<IBootstrapSession, BootstrapSession>();
         await using var bootstrapProvider = bootstrapServices.BuildServiceProvider();
         await using var bootstrapScope = bootstrapProvider.CreateAsyncScope();
         var bootstrap = new BootstrapRunner(
             bootstrapScope.ServiceProvider.GetRequiredService<IRequestDispatcher>(),
-            bootstrapScope.ServiceProvider.GetRequiredService<ISecretHasher>());
+            bootstrapScope.ServiceProvider.GetRequiredService<ISecretHasher>(),
+            bootstrapScope.ServiceProvider.GetRequiredService<IBootstrapSession>());
         var created = await bootstrap.Run(new BootstrapOptions(
             employee,
             "Bootstrap test",

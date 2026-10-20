@@ -12,7 +12,7 @@ public sealed class BootstrapRunnerTests
     public async Task Run_RejectsWeakSecretsBeforeCreatingAnyResource()
     {
         var dispatcher = new RecordingDispatcher();
-        var runner = new BootstrapRunner(dispatcher, new TestSecretHasher());
+        var runner = new BootstrapRunner(dispatcher, new TestSecretHasher(), new RecordingBootstrapSession(dispatcher));
         var options = new BootstrapOptions(
             "ADMIN-001",
             "Initial Administrator",
@@ -34,7 +34,7 @@ public sealed class BootstrapRunnerTests
     public async Task Run_CreatesCompleteAdministrationChainWithoutReturningSecrets()
     {
         var dispatcher = new RecordingDispatcher();
-        var runner = new BootstrapRunner(dispatcher, new TestSecretHasher());
+        var runner = new BootstrapRunner(dispatcher, new TestSecretHasher(), new RecordingBootstrapSession(dispatcher));
         const string password = "Bootstrap-Horse-Battery-Staple-42";
         const string clientSecret = "bootstrap-client-secret-with-entropy";
 
@@ -52,11 +52,11 @@ public sealed class BootstrapRunnerTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(new BootstrapResult(1, 2, 3, 6, 5), result);
-        Assert.Equal("administrator@example.com", Assert.IsType<CreateUserCommand>(dispatcher.Requests[1]).Email);
+        Assert.Equal("administrator@example.com", Assert.IsType<BootstrapOptions>(dispatcher.Requests[1]).Email);
         Assert.Collection(
             dispatcher.Requests,
             request => Assert.IsType<CreateApplicationCommand>(request),
-            request => Assert.IsType<CreateUserCommand>(request),
+            request => Assert.IsType<BootstrapOptions>(request),
             request => Assert.IsType<CreateApplicationClientCommand>(request),
             request => Assert.IsType<CreateModuleCommand>(request),
             request => Assert.IsType<CreateCapabilityCommand>(request),
@@ -70,6 +70,21 @@ public sealed class BootstrapRunnerTests
         var serializedResult = System.Text.Json.JsonSerializer.Serialize(result);
         Assert.DoesNotContain(password, serializedResult, StringComparison.Ordinal);
         Assert.DoesNotContain(clientSecret, serializedResult, StringComparison.Ordinal);
+    }
+
+    private sealed class RecordingBootstrapSession(RecordingDispatcher dispatcher) : IBootstrapSession
+    {
+        public Task<BootstrapResult> Execute(
+            Func<AdministrationContext, CancellationToken, Task<BootstrapResult>> operation,
+            CancellationToken cancellationToken) => operation(new(null, Guid.NewGuid()), cancellationToken);
+
+        public Task<AdministrationResult> CreateAdministrator(
+            BootstrapOptions options, AdministrationContext context, CancellationToken cancellationToken)
+        {
+            Assert.Null(context.ActorUserId);
+            dispatcher.Requests.Add(options);
+            return Task.FromResult(new AdministrationResult("User", 2, 2, null, null));
+        }
     }
 
     private sealed class RecordingDispatcher : IRequestDispatcher
